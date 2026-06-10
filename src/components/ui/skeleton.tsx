@@ -1,0 +1,11 @@
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="skeleton"
+      className={`rounded-md bg-linear-to-r from-muted via-muted/40 to-muted bg-[length:200%_100%] animate-[shimmer_1.8s_ease-in-out_infinite] ${className ?? ""}`}
+      {...props}
+    />
+  )
+}
+
+export { Skeleton }
