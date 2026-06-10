@@ -81,7 +81,7 @@ export default async function PendingAttractionsPage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <form action={approveAttraction.bind(null, a.id)}>
-                      <Button size="sm" className="gap-1">
+                      <Button size="sm" type="submit" className="gap-1">
                         通过
                       </Button>
                     </form>
