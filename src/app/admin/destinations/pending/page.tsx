@@ -72,11 +72,7 @@ export default async function PendingDestinationsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <form action={approveDestination.bind(null, d.id)}>
-                      <Button size="sm" type="submit" className="gap-1">
-                        通过
-                      </Button>
-                    </form>
+                    <ApproveButton destinationId={d.id} destinationName={d.nameZh} />
                     <RejectDialog
                       destinationId={d.id}
                       destinationName={d.nameZh}
