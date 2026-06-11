@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { approveDestination } from "../actions";
+import { ApproveButton } from "./approve-button";
 import { RejectDialog } from "./reject-dialog";
 
 export default async function PendingDestinationsPage() {

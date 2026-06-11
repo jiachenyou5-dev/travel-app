@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { approveAttraction } from "../actions";
 import { Check } from "lucide-react";
@@ -12,27 +12,30 @@ export function ApproveButton({
   attractionId: string;
   attractionName: string;
 }) {
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleApprove() {
-    startTransition(async () => {
-      try {
-        await approveAttraction(attractionId);
-      } catch (err) {
-        alert(err instanceof Error ? err.message : "审核失败，请重试");
-      }
-    });
+  async function handleApprove() {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await approveAttraction(attractionId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "审核失败，请重试");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <Button
       size="sm"
       className="gap-1"
-      disabled={isPending}
+      disabled={isLoading}
       onClick={handleApprove}
+      title={`通过审核：${attractionName}`}
     >
       <Check className="w-3.5 h-3.5" />
-      {isPending ? "处理中..." : "通过"}
+      {isLoading ? "处理中..." : "通过"}
     </Button>
   );
 }
