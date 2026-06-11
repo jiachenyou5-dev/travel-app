@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { approveAttraction } from "../actions";
 import { RejectDialog } from "./reject-dialog";
+import { ApproveButton } from "./approve-button";
 
 export default async function PendingAttractionsPage() {
   const pending = await prisma.attraction.findMany({
@@ -80,11 +80,7 @@ export default async function PendingAttractionsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <form action={approveAttraction.bind(null, a.id)}>
-                      <Button size="sm" type="submit" className="gap-1">
-                        通过
-                      </Button>
-                    </form>
+                    <ApproveButton attractionId={a.id} attractionName={a.nameZh} />
                     <RejectDialog attractionId={a.id} attractionName={a.nameZh} />
                   </div>
                 </div>
