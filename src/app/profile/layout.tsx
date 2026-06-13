@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireAuth } from "@/lib/auth-utils";
 import { User, Heart, MessageSquare, Send, MapPin, Calendar, BookOpen } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProfileLayout({
   children,
 }: {
