@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ export default async function DestinationDetailPage({
         displayPhotos: { orderBy: { sortOrder: "asc" } },
       },
     }),
-    auth(),
+    safeAuth(),
   ]);
 
   const [attractionCount, restaurantCount, accommodationCount] =

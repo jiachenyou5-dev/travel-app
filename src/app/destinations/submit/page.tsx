@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { DestinationForm } from "@/components/destinations/destination-form";
 import { submitDestination } from "@/app/actions/destinations";
 
 export default async function SubmitDestinationPage() {
-  const session = await auth();
+  const session = await safeAuth();
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/destinations/submit");

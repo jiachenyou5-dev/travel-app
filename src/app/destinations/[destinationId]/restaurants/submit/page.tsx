@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { notFound, redirect } from "next/navigation";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { RestaurantForm } from "@/components/destinations/restaurant-form";
@@ -17,7 +17,7 @@ export default async function SubmitRestaurantPage({
       where: { id: destinationId },
       select: { id: true, nameZh: true },
     }),
-    auth(),
+    safeAuth(),
   ]);
 
   if (!destination) notFound();

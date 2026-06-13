@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Search, Star, ChevronRight } from "lucide-react";
+import { DestinationPhotoCarousel } from "@/components/destinations/destination-photo-carousel";
 
 export default async function HomePage() {
   const [destinations, recentReviews, stats] = await Promise.all([
@@ -11,6 +12,13 @@ export default async function HomePage() {
       where: { isPublished: true, status: "APPROVED" },
       take: 6,
       orderBy: { createdAt: "desc" },
+      include: {
+        displayPhotos: {
+          orderBy: { sortOrder: "asc" },
+          take: 10,
+          select: { id: true, url: true, thumbnailUrl: true },
+        },
+      },
     }),
     prisma.review.findMany({
       take: 5,
@@ -96,9 +104,7 @@ export default async function HomePage() {
             {destinations.map((d) => (
               <Link key={d.id} href={`/destinations/${d.id}`}>
                 <Card className="card-float h-full">
-                  <div className="h-40 bg-gradient-to-br from-primary/15 to-primary/5 rounded-t-lg flex items-center justify-center">
-                    <MapPin className="w-10 h-10 text-primary/40" />
-                  </div>
+                  <DestinationPhotoCarousel photos={d.displayPhotos} />
                   <CardHeader>
                     <CardTitle className="text-lg">{d.nameZh}</CardTitle>
                   </CardHeader>

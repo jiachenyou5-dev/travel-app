@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { notFound, redirect } from "next/navigation";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { PhotoUploadForm } from "./form";
@@ -11,15 +11,19 @@ export default async function SubmitPhotosPage({
 }) {
   const { destinationId } = await params;
 
-  const [destination, session] = await Promise.all([
-    prisma.destination.findUnique({
+  let destination;
+  try {
+    destination = await prisma.destination.findUnique({
       where: { id: destinationId },
       select: { id: true, nameZh: true },
-    }),
-    auth(),
-  ]);
+    });
+  } catch {
+    notFound();
+  }
 
   if (!destination) notFound();
+
+  const session = await safeAuth();
 
   if (!session?.user) {
     redirect(

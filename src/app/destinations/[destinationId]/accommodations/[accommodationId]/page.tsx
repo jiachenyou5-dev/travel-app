@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,7 @@ export default async function AccommodationDetailPage({
         },
       },
     }),
-    auth(),
+    safeAuth(),
   ]);
 
   if (!accommodation || !accommodation.isPublished) notFound();

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { auth, signOut } from "@/lib/auth";
+import { signOut } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +14,7 @@ import { MapPin, Search, BookOpen, Calendar } from "lucide-react";
 import { NavLink } from "./active-nav";
 
 export async function Header() {
-  const session = await auth();
+  const session = await safeAuth();
   const user = session?.user as { name?: string; email?: string; role?: string } | undefined;
 
   return (

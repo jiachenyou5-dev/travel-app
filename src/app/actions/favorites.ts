@@ -38,8 +38,8 @@ export async function getFavoriteStatus(
   entityType: "destination" | "attraction" | "restaurant" | "accommodation",
   entityId: string
 ) {
-  const { auth } = await import("@/lib/auth");
-  const session = await auth();
+  const { safeAuth } = await import("@/lib/auth-utils");
+  const session = await safeAuth();
   if (!session?.user) return false;
 
   const userId = (session.user as { id: string }).id;

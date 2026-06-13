@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/auth-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Plus } from "lucide-react";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Button } from "@/components/ui/button";
+import { DestinationPhotoCarousel } from "@/components/destinations/destination-photo-carousel";
 
 export default async function DestinationsPage({
   searchParams,
@@ -17,8 +18,15 @@ export default async function DestinationsPage({
     prisma.destination.findMany({
       where: { isPublished: true, status: "APPROVED" },
       orderBy: { createdAt: "desc" },
+      include: {
+        displayPhotos: {
+          orderBy: { sortOrder: "asc" },
+          take: 10,
+          select: { id: true, url: true, thumbnailUrl: true },
+        },
+      },
     }),
-    auth(),
+    safeAuth(),
   ]);
 
   return (
@@ -55,9 +63,7 @@ export default async function DestinationsPage({
           {destinations.map((d) => (
             <Link key={d.id} href={`/destinations/${d.id}`}>
               <Card className="card-float h-full">
-                <div className="h-40 bg-gradient-to-br from-primary/15 to-primary/5 rounded-t-lg flex items-center justify-center">
-                  <MapPin className="w-10 h-10 text-primary/40" />
-                </div>
+                <DestinationPhotoCarousel photos={d.displayPhotos} />
                 <CardHeader>
                   <CardTitle className="text-lg">{d.nameZh}</CardTitle>
                 </CardHeader>
