@@ -9,7 +9,11 @@ export async function safeAuth(): Promise<Session | null> {
   try {
     return await auth();
   } catch (err) {
-    console.error("[auth] safeAuth catch:", err);
+    // 预渲染时 auth() 会抛出 "Dynamic server usage" 错误，这是正常的，不需要打印
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("Dynamic server usage")) {
+      console.error("[auth] safeAuth catch:", err);
+    }
     return null;
   }
 }
