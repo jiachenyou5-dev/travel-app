@@ -34,6 +34,7 @@ export default async function EditJournalPage({
         defaultValues={{
           title: journal.title,
           content: journal.content,
+          region: journal.region ?? undefined,
         }}
         submitLabel="保存修改"
       />

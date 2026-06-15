@@ -43,6 +43,7 @@ export async function createJournal(formData: FormData) {
   const data = journalSchema.parse({
     title: formData.get("title"),
     content: formData.get("content"),
+    region: formData.get("region") || undefined,
   });
 
   const photoFiles = formData.getAll("photos").filter(
@@ -59,6 +60,7 @@ export async function createJournal(formData: FormData) {
       userId: user.id,
       title: data.title,
       content: data.content,
+      region: data.region || null,
       coverImage,
       photos: {
         create: uploadedPhotos.map((p, i) => ({
@@ -89,6 +91,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
   const data = journalSchema.parse({
     title: formData.get("title"),
     content: formData.get("content"),
+    region: formData.get("region") || undefined,
   });
 
   const photoFiles = formData.getAll("photos").filter(
@@ -114,6 +117,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
     data: {
       title: data.title,
       content: data.content,
+      region: data.region || null,
     },
   });
 

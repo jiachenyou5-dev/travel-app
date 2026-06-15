@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
+import { REGIONS } from "@/lib/validators";
 
 interface JournalFormProps {
   action: (formData: FormData) => Promise<void>;
   defaultValues?: {
     title?: string;
     content?: string;
+    region?: string;
   };
   submitLabel?: string;
 }
@@ -24,6 +26,7 @@ export function JournalForm({
 }: JournalFormProps) {
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [content, setContent] = useState(defaultValues?.content ?? "");
+  const [region, setRegion] = useState(defaultValues?.region ?? "");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<
     { url: string; id: string }[]
@@ -64,6 +67,7 @@ export function JournalForm({
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("content", content.trim());
+    if (region) formData.append("region", region);
     photoFiles.forEach((f) => formData.append("photos", f));
 
     try {
@@ -87,6 +91,23 @@ export function JournalForm({
           placeholder="给你的游记起个标题..."
           className="mt-1"
         />
+      </div>
+
+      <div>
+        <Label htmlFor="region">所在地区</Label>
+        <select
+          id="region"
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+        >
+          <option value="">请选择地区（可选）</option>
+          {REGIONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

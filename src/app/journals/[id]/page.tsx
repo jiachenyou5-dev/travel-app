@@ -7,6 +7,10 @@ import { ImageGrid } from "@/components/ui/image-upload";
 import { BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { JournalInteractionBar } from "@/components/journals/journal-interaction-bar";
+import { JournalCommentSection } from "@/components/journals/journal-comment-section";
+import { safeAuth } from "@/lib/auth-utils";
+import { Suspense } from "react";
 
 export default async function JournalDetailPage({
   params,
@@ -15,15 +19,49 @@ export default async function JournalDetailPage({
 }) {
   const { id } = await params;
 
+  const session = await safeAuth();
+  const currentUser = session?.user as { id: string } | undefined;
+
   const journal = await prisma.journal.findUnique({
     where: { id },
     include: {
       user: { select: { name: true, image: true } },
       photos: { orderBy: { sortOrder: "asc" } },
+      comments: {
+        include: { user: { select: { id: true, name: true, image: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { likes: true, comments: true } },
     },
   });
 
   if (!journal || !journal.isPublished) notFound();
+
+  let liked = false;
+  let favorited = false;
+
+  if (currentUser) {
+    const [likeRecord, favRecord] = await Promise.all([
+      prisma.journalLike.findUnique({
+        where: {
+          userId_journalId: {
+            userId: currentUser.id,
+            journalId: id,
+          },
+        },
+      }),
+      prisma.journalFavorite.findUnique({
+        where: {
+          userId_journalId: {
+            userId: currentUser.id,
+            journalId: id,
+          },
+        },
+      }),
+    ]);
+    liked = likeRecord !== null;
+    favorited = favRecord !== null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -39,7 +77,7 @@ export default async function JournalDetailPage({
           {journal.title}
         </h1>
 
-        <div className="flex items-center gap-3 text-sm text-muted-foreground mb-8">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
           <span>{journal.user.name ?? "匿名用户"}</span>
           <span>·</span>
           <span>
@@ -49,6 +87,12 @@ export default async function JournalDetailPage({
               day: "numeric",
             })}
           </span>
+          {journal.region && (
+            <>
+              <span>·</span>
+              <span className="text-primary/80">{journal.region}</span>
+            </>
+          )}
         </div>
 
         {journal.photos.length > 0 && (
@@ -72,7 +116,28 @@ export default async function JournalDetailPage({
             {journal.content}
           </ReactMarkdown>
         </div>
+
+        {/* 互动栏 */}
+        <JournalInteractionBar
+          journalId={journal.id}
+          initialLiked={liked}
+          initialFavorited={favorited}
+          likeCount={journal._count.likes}
+          commentCount={journal._count.comments}
+        />
       </article>
+
+      {/* 评论区 */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          评论 ({journal._count.comments})
+        </h2>
+        <JournalCommentSection
+          journalId={journal.id}
+          initialComments={journal.comments}
+          currentUserId={currentUser?.id}
+        />
+      </section>
     </div>
   );
 }

@@ -70,9 +70,22 @@ export const reviewSchema = z.object({
   visitDate: z.string().optional(),
 });
 
+export const REGIONS = [
+  "华北",
+  "华东",
+  "华南",
+  "华中",
+  "西南",
+  "西北",
+  "东北",
+  "港澳台",
+  "海外",
+] as const;
+
 export const journalSchema = z.object({
   title: z.string().min(1, "请输入游记标题"),
   content: z.string().min(1, "请输入游记内容"),
+  region: z.string().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
