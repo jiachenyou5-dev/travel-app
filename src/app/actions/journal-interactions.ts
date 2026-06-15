@@ -108,7 +108,7 @@ export async function addJournalComment(journalId: string, content: string) {
       content: content.trim(),
     },
     include: {
-      user: { select: { name: true, image: true } },
+      user: { select: { id: true, name: true, image: true } },
     },
   });
 
