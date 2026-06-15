@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Building2, UtensilsCrossed, Hotel } from "lucide-react";
 import { poiSearch } from "@/lib/amap";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "搜索",
   description: "搜索目的地、景点、美食、住宿",
@@ -252,17 +254,19 @@ export default async function SearchPage({
               </h2>
               <div className="space-y-2">
                 {amapResults.map((poi) => (
-                  <Card key={poi.id}>
-                    <CardContent className="py-3">
-                      <div className="font-medium">{poi.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {poi.address}
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {poi.type}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <Link key={poi.id} href={`/search/place/${poi.id}`}>
+                    <Card className="card-float">
+                      <CardContent className="py-3">
+                        <div className="font-medium">{poi.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {poi.address}
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {poi.type}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             </div>

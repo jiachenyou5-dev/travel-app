@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Lightbox } from "@/components/ui/lightbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 import { deleteDestinationPhoto } from "@/app/admin/destinations/photo-actions";
+import { uploadEntityPhotos } from "@/app/actions/entity-photos";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,28 +26,31 @@ interface Photo {
   altText?: string | null;
 }
 
+type EntityType = "attraction" | "restaurant" | "accommodation";
+
 interface EntityPhotosSectionProps {
   photos: Photo[];
-  // 管理员标识：仅管理员可见删除按钮
   isAdmin?: boolean;
-  // 删除接口预留：传入 destinationId 用于构造删除请求
   destinationId?: string;
+  entityType?: EntityType;
+  entityId?: string;
 }
 
 export function EntityPhotosSection({
   photos,
   isAdmin = false,
-  destinationId,
+  entityType,
+  entityId,
 }: EntityPhotosSectionProps) {
   const router = useRouter();
   const [lightboxIndex, setLightboxIndex] = useState(-1);
-  // 正在删除中的照片 ID，用于 loading 态
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // 控制确认弹窗开关
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleDelete(photoId: string) {
-   setConfirmId(null);
+    setConfirmId(null);
     setDeletingId(photoId);
     try {
       await deleteDestinationPhoto(photoId);
@@ -59,21 +63,70 @@ export function EntityPhotosSection({
     }
   }
 
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !entityType || !entityId) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("photos", f));
+      await uploadEntityPhotos(entityType, entityId, formData);
+      toast.success("照片上传成功");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "上传失败");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">照片 ({photos.length})</CardTitle>
+        {isAdmin && entityType && entityId && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleUpload}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {uploading ? (
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {uploading ? "上传中..." : "上传照片"}
+            </button>
+          </>
+        )}
       </CardHeader>
       <CardContent>
-        {photos.length === 0 ? (
+        {photos.length === 0 && !uploading ? (
           <div className="text-center py-8 text-muted-foreground/70">
             <p className="text-sm">暂无照片</p>
+            {isAdmin && (
+              <p className="text-xs mt-1">点击右上角「上传照片」添加</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {photos.map((img, i) => (
               <div key={img.id} className="relative group">
-                {/* 照片缩略图 */}
                 <button
                   type="button"
                   className="block w-full aspect-square overflow-hidden rounded-lg border hover:opacity-90 transition-opacity"
@@ -86,7 +139,6 @@ export function EntityPhotosSection({
                   />
                 </button>
 
-                {/* 删除按钮：仅管理员可见，hover 时显示 */}
                 {isAdmin && (
                   <AlertDialog
                     open={confirmId === img.id}

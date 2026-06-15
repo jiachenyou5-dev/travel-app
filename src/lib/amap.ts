@@ -126,3 +126,87 @@ export async function autoGeocodeInBackground(
   const result = await geocode(address, city);
   return result ? { lat: result.lat, lng: result.lng } : null;
 }
+
+/**
+ * 通过 POI ID 获取 POI 详情
+ */
+export async function getPoiDetail(
+  id: string
+): Promise<POIItem | null> {
+  if (!AMAP_API_KEY) return null;
+
+  const params = new URLSearchParams({
+    key: AMAP_API_KEY,
+    id,
+    output: "JSON",
+    extensions: "all",
+  });
+
+  try {
+    const res = await fetch(
+      `${AMAP_BASE}/place/detail?${params.toString()}`
+    );
+    const data = await res.json();
+    if (data.status !== "1" || !data.pois?.length) return null;
+
+    const poi = data.pois[0];
+    const [lng, lat] = poi.location.split(",").map(Number);
+    return {
+      id: poi.id,
+      name: poi.name,
+      address: poi.address || "",
+      lat,
+      lng,
+      type: poi.type || "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 周边搜索：根据经纬度和类型搜索附近 POI
+ */
+export async function nearbyPoiSearch(
+  lat: number,
+  lng: number,
+  types: string,
+  radius: number = 1000,
+  offset: number = 10
+): Promise<POIItem[]> {
+  if (!AMAP_API_KEY) return [];
+
+  const params = new URLSearchParams({
+    key: AMAP_API_KEY,
+    location: `${lng},${lat}`,
+    types,
+    radius: String(radius),
+    output: "JSON",
+    offset: String(offset),
+    extensions: "base",
+  });
+
+  try {
+    const res = await fetch(
+      `${AMAP_BASE}/place/around?${params.toString()}`
+    );
+    const data = await res.json();
+    if (data.status !== "1" || !data.pois?.length) return [];
+
+    return data.pois.map(
+      (poi: { id: string; name: string; address: string; location: string; type: string }) => {
+        const [lng, lat] = poi.location.split(",").map(Number);
+        return {
+          id: poi.id,
+          name: poi.name,
+          address: poi.address || "",
+          lat,
+          lng,
+          type: poi.type || "",
+        };
+      }
+    );
+  } catch {
+    return [];
+  }
+}

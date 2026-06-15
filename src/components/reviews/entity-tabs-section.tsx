@@ -44,7 +44,12 @@ export function EntityTabsSection({
         <TabsTrigger value="reviews">评论</TabsTrigger>
       </TabsList>
       <TabsContent value="photos" className="mt-4">
-        <EntityPhotosSection photos={photos} />
+        <EntityPhotosSection
+          photos={photos}
+          isAdmin={isAdmin}
+          entityType={entityType}
+          entityId={entityId}
+        />
       </TabsContent>
       <TabsContent value="reviews" className="mt-4">
         <EntityReviewsSection
