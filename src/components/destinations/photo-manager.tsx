@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ImageUpload, ImageGrid } from "@/components/ui/image-upload";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "@/components/ui/clay-icons";
 import { uploadDestinationPhotos, deleteDestinationPhoto } from "@/app/admin/destinations/photo-actions";
 import { Lightbox } from "@/components/ui/lightbox";
 import { useRouter } from "next/navigation";

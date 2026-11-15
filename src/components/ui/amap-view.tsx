@@ -8,8 +8,12 @@ interface MarkerData {
   title: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AMapType = any;
+interface AmapInstance { add(marker: object): void; destroy(): void }
+interface AMapType {
+  Map: new (container: HTMLDivElement, options: { zoom: number; center: number[] }) => AmapInstance;
+  Marker: new (options: { position: number[]; title: string }) => object;
+}
+const EMPTY_MARKERS: MarkerData[] = [];
 
 function getAMap(): AMapType | undefined {
   return (window as unknown as Record<string, AMapType>).AMap;
@@ -17,7 +21,7 @@ function getAMap(): AMapType | undefined {
 
 export function AmapView({
   center,
-  markers = [],
+  markers = EMPTY_MARKERS,
   zoom = 14,
   className,
 }: {
@@ -27,8 +31,11 @@ export function AmapView({
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<AMapType>(null);
+  const mapRef = useRef<AmapInstance | null>(null);
   const [error, setError] = useState(false);
+
+  const latitude = center?.lat;
+  const longitude = center?.lng;
 
   useEffect(() => {
     let cancelled = false;
@@ -50,9 +57,9 @@ export function AmapView({
 
       try {
         const map = new AMap.Map(containerRef.current, {
-          zoom: center ? zoom : 4,
-          center: center
-            ? [center.lng, center.lat]
+          zoom: latitude !== undefined && longitude !== undefined ? zoom : 4,
+          center: latitude !== undefined && longitude !== undefined
+            ? [longitude, latitude]
             : [116.397428, 39.90923],
         });
 
@@ -82,7 +89,7 @@ export function AmapView({
         }
       }
     };
-  }, [center?.lat, center?.lng, zoom, markers]);
+  }, [latitude, longitude, zoom, markers]);
 
   if (error) {
     return (

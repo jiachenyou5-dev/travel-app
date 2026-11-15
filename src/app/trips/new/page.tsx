@@ -1,27 +1,17 @@
 "use client";
+import type { TripDay } from "@/lib/trip-schema";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TripPlanCard } from "@/components/trips/trip-plan-card";
 import { generateTrip, saveTrip } from "@/app/actions/trips";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "@/components/ui/clay-icons";
 
-interface TripDay {
-  dayNumber: number;
-  items: {
-    time: string;
-    title: string;
-    description: string;
-    type: string;
-  }[];
-}
 
 export default function NewTripPage() {
-  const router = useRouter();
   const [destination, setDestination] = useState("");
   const [days, setDays] = useState(3);
   const [loading, setLoading] = useState(false);
@@ -35,6 +25,7 @@ export default function NewTripPage() {
     setError(null);
     setResult(null);
 
+    try {
     const res = await generateTrip(destination.trim(), days);
 
     if ("error" in res) {
@@ -43,14 +34,19 @@ export default function NewTripPage() {
       setResult(res.days);
       setTitle(`${destination} ${days}日游`);
     }
-    setLoading(false);
+    } catch {
+      setError("生成失败，请确认已登录后重试");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-foreground mb-8">AI 生成行程</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <h1 className="text-3xl font-medium tracking-tight text-foreground mb-8">AI 生成行程</h1>
+      <p className="mb-8 -mt-4 text-muted-foreground">告诉我们目的地，把旅行灵感整理成每天的安排。</p>
 
-      <Card className="mb-8">
+      <Card className="mb-8 bg-secondary ring-0">
         <CardHeader>
           <CardTitle className="text-lg">输入旅行信息</CardTitle>
         </CardHeader>
@@ -113,6 +109,8 @@ export default function NewTripPage() {
                 await saveTrip(formData);
               }}
             >
+              <input type="hidden" name="title" value={title} />
+              <input type="hidden" name="destination" value={destination} />
               <Button type="submit" className="gap-2">
                 保存行程
               </Button>

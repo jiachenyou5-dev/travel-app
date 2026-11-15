@@ -1,6 +1,6 @@
 "use client";
 
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "@/components/ui/clay-icons";
 import { useEffect, useCallback } from "react";
 
 interface LightboxProps {

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
+  experimental: { serverActions: { bodySizeLimit: "21mb" } },
   serverExternalPackages: [
     "@prisma/adapter-libsql",
     "@libsql/client",

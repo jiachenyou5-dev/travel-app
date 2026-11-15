@@ -3,8 +3,10 @@
 import { ReviewList } from "@/components/reviews/review-list";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createReview, deleteReview } from "@/app/actions/reviews";
+import { createReview, deleteReview, updateReview } from "@/app/actions/reviews";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 
 interface Review {
@@ -33,6 +35,8 @@ export function EntityReviewsSection({
   isAdmin: boolean;
 }) {
   const router = useRouter();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingReview = reviews.find(review => review.id === editingId);
 
   async function handleCreateReview(formData: FormData) {
     await createReview(entityType, entityId, formData);
@@ -51,6 +55,22 @@ export function EntityReviewsSection({
 
   return (
     <div className="space-y-8">
+      <Dialog open={!!editingReview} onOpenChange={open => { if (!open) setEditingId(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>编辑评论</DialogTitle></DialogHeader>
+          {editingReview && <ReviewForm
+            key={editingReview.id}
+            defaultValues={{ rating: editingReview.rating, title: editingReview.title ?? "", content: editingReview.content, visitDate: editingReview.visitDate?.slice(0, 10) ?? "" }}
+            submitLabel="保存修改"
+            allowPhotos={false}
+            action={async formData => {
+              await updateReview(editingReview.id, formData);
+              setEditingId(null);
+              router.refresh();
+            }}
+          />}
+        </DialogContent>
+      </Dialog>
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">评论 ({reviews.length})</CardTitle>
@@ -59,8 +79,9 @@ export function EntityReviewsSection({
           <ReviewList
             reviews={reviews}
             currentUserId={currentUserId}
+            isAdmin={isAdmin}
             onDelete={handleDeleteReview}
-            onEdit={() => {}}
+            onEdit={setEditingId}
           />
         </CardContent>
       </Card>

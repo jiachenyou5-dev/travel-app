@@ -2,15 +2,12 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
-import { Lightbox } from "@/components/ui/lightbox";
 import { ImageGrid } from "@/components/ui/image-upload";
-import { BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { JournalInteractionBar } from "@/components/journals/journal-interaction-bar";
 import { JournalCommentSection } from "@/components/journals/journal-comment-section";
 import { safeAuth } from "@/lib/auth-utils";
-import { Suspense } from "react";
 
 export default async function JournalDetailPage({
   params,

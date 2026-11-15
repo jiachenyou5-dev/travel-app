@@ -50,6 +50,11 @@ export async function updateDestination(id: string, formData: FormData) {
 export async function deleteDestination(id: string) {
   await requireAdmin();
 
+  const destination = await prisma.destination.findUnique({ where: { id }, include: { _count: { select: { attractions: true, restaurants: true, accommodations: true, displayPhotos: true, favorites: true } } } });
+  if (!destination) throw new Error("目的地不存在");
+  if (Object.values(destination._count).some(count => count > 0)) {
+    throw new Error("该目的地有关联内容，不能直接删除，请先下架以保留数据");
+  }
   await prisma.destination.delete({ where: { id } });
 
   revalidatePath("/destinations");

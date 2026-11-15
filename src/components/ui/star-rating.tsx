@@ -1,6 +1,6 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star } from "@/components/ui/clay-icons";
 import { useState } from "react";
 
 function StarIcon({
@@ -66,9 +66,12 @@ export function StarRatingInput({
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = star <= (hovered || value);
         return (
-          <span
+          <button
+            type="button"
+            aria-label={`${star} 星`}
+            aria-pressed={value === star}
             key={star}
-            className="cursor-pointer"
+            className="flex size-9 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-ring"
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(0)}
             onClick={() => onChange(star)}
@@ -80,7 +83,7 @@ export function StarRatingInput({
                   : "text-muted-foreground/40"
               }`}
             />
-          </span>
+          </button>
         );
       })}
     </div>

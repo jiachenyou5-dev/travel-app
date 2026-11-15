@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { approveRestaurant } from "../actions";
-import { Check } from "lucide-react";
+import { Check } from "@/components/ui/clay-icons";
 
 export function ApproveButton({
   restaurantId,

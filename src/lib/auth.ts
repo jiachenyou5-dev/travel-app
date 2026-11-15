@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { loginSchema } from "./validators";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -11,11 +13,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
       }
+      const current = token.id ? await prisma.user.findUnique({ where: { id: token.id as string } }) : null;
+      if (!current) return null;
+      const credentialTag = createHash("sha256").update(current.passwordHash ?? "").digest("hex");
+      if (user) token.credentialTag = credentialTag;
+      if (token.credentialTag !== credentialTag) return null;
+      token.role = current.role;
+      token.name = current.name;
       return token;
     },
     session({ session, token }) {
@@ -33,12 +42,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "密码" },
       },
       async authorize(credentials) {
-        const { email, password } = credentials as {
-          email: string;
-          password: string;
-        };
-
-        if (!email || !password) return null;
+        const input = loginSchema.safeParse(credentials);
+        if (!input.success) return null;
+        const { email, password } = input.data;
 
         const user = await prisma.user.findUnique({
           where: { email },

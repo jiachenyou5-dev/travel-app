@@ -10,7 +10,7 @@ import {
   UtensilsCrossed,
   Navigation,
   ExternalLink,
-} from "lucide-react";
+} from "@/components/ui/clay-icons";
 import { PoiFavoriteButton } from "./favorite-btn";
 
 export const dynamic = "force-dynamic";

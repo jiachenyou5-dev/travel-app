@@ -3,20 +3,16 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
-
-function generateFilename(originalName: string): string {
-  const ext = path.extname(originalName).toLowerCase() || ".jpg";
-  return `${crypto.randomUUID()}${ext}`;
-}
+import { savePhotos, removeMedia } from "@/lib/media";
 
 export async function submitDestinationPhotos(
   destinationId: string,
   formData: FormData
 ) {
   const user = await requireAuth();
+
+  const destination = await prisma.destination.findFirst({ where: { id: destinationId, isPublished: true, status: "APPROVED" } });
+  if (!destination) throw new Error("目的地不存在或尚未发布");
 
   const files: File[] = [];
   const entries = formData.getAll("photos");
@@ -26,41 +22,20 @@ export async function submitDestinationPhotos(
 
   if (files.length === 0) throw new Error("未选择文件");
 
-  const uploadsDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "destinations"
-  );
-  await mkdir(uploadsDir, { recursive: true });
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-
   const maxSort = await prisma.photo.aggregate({
     where: { destinationId },
     _max: { sortOrder: true },
   });
-  let nextSort = (maxSort._max.sortOrder ?? -1) + 1;
+  const nextSort = (maxSort._max.sortOrder ?? -1) + 1;
 
-  for (const file of files) {
-    if (!allowedTypes.includes(file.type)) continue;
-    if (file.size > 10 * 1024 * 1024) continue;
-
-    const filename = generateFilename(file.name);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadsDir, filename), buffer);
-
-    const url = `/uploads/destinations/${filename}`;
-    await prisma.photo.create({
-      data: {
-        url,
-        thumbnailUrl: url,
-        sortOrder: nextSort,
-        destinationId,
-        uploadedById: user.id,
-      },
-    });
-    nextSort++;
+  const uploadedPhotos = await savePhotos(files, "destinations");
+  try {
+    await prisma.photo.createMany({ data: uploadedPhotos.map((photo, index) => ({
+      ...photo, sortOrder: nextSort + index, destinationId, uploadedById: user.id,
+    })) });
+  } catch (error) {
+    await removeMedia(uploadedPhotos);
+    throw error;
   }
 
   revalidatePath(`/destinations/${destinationId}`);

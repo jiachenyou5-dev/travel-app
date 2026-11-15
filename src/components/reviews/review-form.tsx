@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,16 @@ interface ReviewFormProps {
     visitDate?: string;
   };
   submitLabel?: string;
+  allowPhotos?: boolean;
 }
 
 export function ReviewForm({
   action,
   defaultValues,
   submitLabel = "发表评论",
+  allowPhotos = true,
 }: ReviewFormProps) {
+  const formId = useId();
   const [rating, setRating] = useState(defaultValues?.rating || 0);
   const [title, setTitle] = useState(defaultValues?.title || "");
   const [content, setContent] = useState(defaultValues?.content || "");
@@ -97,11 +100,11 @@ export function ReviewForm({
       </div>
 
       <div>
-        <Label htmlFor="review-title" className="mb-1 block">
+        <Label htmlFor={`${formId}-review-title`} className="mb-1 block">
           标题（可选）
         </Label>
         <Input
-          id="review-title"
+          id={`${formId}-review-title`}
           name="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -111,11 +114,11 @@ export function ReviewForm({
       </div>
 
       <div>
-        <Label htmlFor="review-content" className="mb-1 block">
+        <Label htmlFor={`${formId}-review-content`} className="mb-1 block">
           评论内容
         </Label>
         <Textarea
-          id="review-content"
+          id={`${formId}-review-content`}
           name="content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -129,11 +132,11 @@ export function ReviewForm({
       </div>
 
       <div>
-        <Label htmlFor="review-date" className="mb-1 block">
+        <Label htmlFor={`${formId}-review-date`} className="mb-1 block">
           到访日期（可选）
         </Label>
         <Input
-          id="review-date"
+          id={`${formId}-review-date`}
           name="visitDate"
           type="date"
           value={visitDate}
@@ -141,7 +144,7 @@ export function ReviewForm({
         />
       </div>
 
-      <div>
+      {allowPhotos && <div>
         <Label className="mb-1 block">照片（可选）</Label>
         <ImageUpload
           onUpload={handleUpload}
@@ -149,7 +152,7 @@ export function ReviewForm({
           onRemove={handleRemovePreview}
           maxFiles={5}
         />
-      </div>
+      </div>}
 
       <Button type="submit" disabled={pending} className="w-full sm:w-auto">
         {pending ? "提交中..." : submitLabel}

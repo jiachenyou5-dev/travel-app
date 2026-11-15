@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Building2, UtensilsCrossed, Hotel, Heart } from "lucide-react";
+import { MapPin, Building2, UtensilsCrossed, Hotel, Heart } from "@/components/ui/clay-icons";
 
 export default async function FavoritesPage() {
   const sessionUser = await requireAuth();

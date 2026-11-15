@@ -1,3 +1,4 @@
+import { prisma } from "./prisma";
 import { auth } from "./auth";
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
@@ -39,20 +40,16 @@ export async function requireAuth() {
   if (!user) {
     redirect("/login");
   }
-  return user;
+  const current = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, role: true, name: true, email: true } });
+  if (!current) redirect("/login");
+  return current;
 }
 
 /**
  * 要求管理员权限。未登录或非管理员时重定向。
  */
 export async function requireAdmin() {
-  const session = await safeAuth();
-  const user = session?.user as { id: string; role?: string } | undefined;
-  if (!user) {
-    redirect("/login");
-  }
-  if (user.role !== "ADMIN") {
-    redirect("/");
-  }
+  const user = await requireAuth();
+  if (user.role !== "ADMIN") redirect("/");
   return user;
 }

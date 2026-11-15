@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { AmapView } from "@/components/ui/amap-view";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
+import { MapPin } from "@/components/ui/clay-icons";
 
 interface MarkerData {
   lat: number;

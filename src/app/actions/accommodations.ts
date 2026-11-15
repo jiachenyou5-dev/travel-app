@@ -38,6 +38,8 @@ export async function submitAccommodation(
       ...data,
       destinationId,
       isPublished: false,
+      status: "PENDING",
+      submittedById: user.id,
     },
   });
 

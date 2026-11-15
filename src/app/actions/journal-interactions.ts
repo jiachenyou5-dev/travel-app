@@ -1,43 +1,28 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { safeAuth } from "@/lib/auth-utils";
+import { z } from "zod";
+import { requireAuth, safeAuth } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 
 // ==================== 点赞 ====================
 
-export async function toggleJournalLike(journalId: string) {
-  const session = await safeAuth();
-  const user = session?.user as { id: string } | undefined;
-  if (!user) {
-    throw new Error("UNAUTHORIZED");
-  }
-
-  const existing = await prisma.journalLike.findUnique({
-    where: { userId_journalId: { userId: user.id, journalId } },
-  });
-
-  if (existing) {
-    await prisma.journalLike.delete({ where: { id: existing.id } });
-    await prisma.journal.update({
-      where: { id: journalId },
-      data: { likeCount: { decrement: 1 } },
-    });
-    revalidatePath("/journals");
-    revalidatePath(`/journals/${journalId}`);
-    return { liked: false };
-  }
-
-  await prisma.journalLike.create({
-    data: { userId: user.id, journalId },
-  });
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: { likeCount: { increment: 1 } },
+export async function setJournalLike(journalId: string, liked: boolean) {
+  const user = await requireAuth();
+  z.string().min(1).max(100).parse(journalId);
+  z.boolean().parse(liked);
+  const likeCount = await prisma.$transaction(async tx => {
+    const journal = await tx.journal.findFirst({ where: { id: journalId, isPublished: true } });
+    if (!journal) throw new Error("游记不存在");
+    if (liked) await tx.journalLike.upsert({ where: { userId_journalId: { userId: user.id, journalId } }, create: { userId: user.id, journalId }, update: {} });
+    else await tx.journalLike.deleteMany({ where: { userId: user.id, journalId } });
+    const count = await tx.journalLike.count({ where: { journalId } });
+    await tx.journal.update({ where: { id: journalId }, data: { likeCount: count } });
+    return count;
   });
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
-  return { liked: true };
+  return { liked, likeCount };
 }
 
 export async function getJournalLikeStatus(journalId: string) {
@@ -53,28 +38,14 @@ export async function getJournalLikeStatus(journalId: string) {
 
 // ==================== 收藏 ====================
 
-export async function toggleJournalFavorite(journalId: string) {
-  const session = await safeAuth();
-  const user = session?.user as { id: string } | undefined;
-  if (!user) {
-    throw new Error("UNAUTHORIZED");
-  }
-
-  const existing = await prisma.journalFavorite.findUnique({
-    where: { userId_journalId: { userId: user.id, journalId } },
-  });
-
-  if (existing) {
-    await prisma.journalFavorite.delete({ where: { id: existing.id } });
-    revalidatePath(`/journals/${journalId}`);
-    return { favorited: false };
-  }
-
-  await prisma.journalFavorite.create({
-    data: { userId: user.id, journalId },
-  });
+export async function setJournalFavorite(journalId: string, favorited: boolean) {
+  const user = await requireAuth();
+  z.string().min(1).max(100).parse(journalId);
+  z.boolean().parse(favorited);
+  if (favorited) await prisma.journalFavorite.upsert({ where: { userId_journalId: { userId: user.id, journalId } }, create: { userId: user.id, journalId }, update: {} });
+  else await prisma.journalFavorite.deleteMany({ where: { userId: user.id, journalId } });
   revalidatePath(`/journals/${journalId}`);
-  return { favorited: true };
+  return { favorited };
 }
 
 export async function getJournalFavoriteStatus(journalId: string) {
@@ -97,9 +68,7 @@ export async function addJournalComment(journalId: string, content: string) {
     throw new Error("UNAUTHORIZED");
   }
 
-  if (!content.trim()) {
-    throw new Error("评论内容不能为空");
-  }
+  content = z.string().trim().min(1, "评论内容不能为空").max(2000).parse(content);
 
   const comment = await prisma.journalComment.create({
     data: {

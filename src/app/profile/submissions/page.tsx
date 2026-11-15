@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, MapPin, Clock, CheckCircle2, XCircle, Globe, UtensilsCrossed, Building2 } from "lucide-react";
+import { Send, MapPin, Clock, CheckCircle2, XCircle, Globe, UtensilsCrossed, Building2 } from "@/components/ui/clay-icons";
 
 const statusConfig: Record<
   string,
@@ -17,12 +17,13 @@ const statusConfig: Record<
 const typeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   destination: { label: "目的地", icon: <Globe className="w-3 h-3" /> },
   attraction: { label: "景点", icon: <Building2 className="w-3 h-3" /> },
+  accommodation: { label: "住宿", icon: <Building2 className="w-3 h-3" /> },
   restaurant: { label: "美食", icon: <UtensilsCrossed className="w-3 h-3" /> },
 };
 
 interface SubmissionItem {
   id: string;
-  type: "destination" | "attraction" | "restaurant";
+  type: "destination" | "attraction" | "restaurant" | "accommodation";
   name: string;
   status: string;
   reviewNotes: string | null;
@@ -34,7 +35,7 @@ interface SubmissionItem {
 export default async function SubmissionsPage() {
   const user = await requireAuth();
 
-  const [attractionSubs, destinationSubs, restaurantSubs] = await Promise.all([
+  const [attractionSubs, destinationSubs, restaurantSubs, accommodationSubs] = await Promise.all([
     prisma.attraction.findMany({
       where: { submittedById: user.id },
       orderBy: { createdAt: "desc" },
@@ -49,9 +50,14 @@ export default async function SubmissionsPage() {
       orderBy: { createdAt: "desc" },
       include: { destination: { select: { id: true, nameZh: true } } },
     }),
+    prisma.accommodation.findMany({
+      where: { submittedById: user.id }, orderBy: { createdAt: "desc" },
+      include: { destination: { select: { id: true, nameZh: true } } },
+    }),
   ]);
 
   const allSubmissions: SubmissionItem[] = [
+    ...accommodationSubs.map(a => ({ id: a.id, type: "accommodation" as const, name: a.nameZh, status: a.status, reviewNotes: a.reviewNotes, createdAt: a.createdAt, link: `/destinations/${a.destination.id}/accommodations/${a.id}`, subtitle: a.destination.nameZh })),
     ...destinationSubs.map((d) => ({
       id: d.id,
       type: "destination" as const,

@@ -1,227 +1,29 @@
 "use server";
 
-import { exec } from "child_process";
-import path from "path";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { queryTravelAI } from "@/lib/ai";
+import { tripDaysSchema, tripRequestSchema, type TripDay } from "@/lib/trip-schema";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-function execFlyAI(query: string): Promise<string> {
-  const cliPath = path.join(
-    process.cwd(),
-    "node_modules",
-    "@fly-ai",
-    "flyai-cli",
-    "dist",
-    "flyai-bundle.cjs"
-  );
-
-  return new Promise((resolve, reject) => {
-    exec(
-      `node "${cliPath}" ai-search --query ${JSON.stringify(query)}`,
-      { timeout: 60000, env: { ...process.env } },
-      (err, stdout, stderr) => {
-        if (stdout) {
-          try {
-            const result = JSON.parse(stdout.trim());
-            if (result?.data) {
-              resolve(result.data);
-              return;
-            }
-          } catch {
-            // JSON parse failed, fall through to error handling
-          }
-        }
-
-        const message = err?.message ?? stderr ?? "FlyAI CLI error";
-        reject(new Error(message));
-      }
-    );
-  });
-}
-
-interface TripDay {
-  dayNumber: number;
-  items: {
-    time: string;
-    title: string;
-    description: string;
-    type: string;
-  }[];
-}
-
-function extractJson(text: string): string | null {
-  const cleaned = text
-    .replace(/```json\s*/gi, "")
-    .replace(/```\s*/g, "")
-    .trim();
-
-  const daysIdx = cleaned.indexOf('"days"');
-  if (daysIdx === -1) return null;
-
-  let startIdx = daysIdx;
-  while (startIdx > 0 && cleaned[startIdx] !== "{") {
-    startIdx--;
-  }
-  if (cleaned[startIdx] !== "{") return null;
-
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-
-  for (let i = startIdx; i < cleaned.length; i++) {
-    const ch = cleaned[i];
-
-    if (escape) {
-      escape = false;
-      continue;
-    }
-
-    if (ch === "\\") {
-      escape = true;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-
-    if (inString) continue;
-
-    if (ch === "{") {
-      depth++;
-    } else if (ch === "}") {
-      depth--;
-      if (depth === 0) {
-        return cleaned.slice(startIdx, i + 1);
-      }
-    }
-  }
-
-  return null;
-}
-
-function repairJson(json: string): string {
-  return json
-    .replace(/,\s*}/g, "}")
-    .replace(/,\s*]/g, "]");
-}
-
-function tryParseLenient(json: string): TripDay[] | null {
+export async function generateTrip(destination: string, days: number): Promise<{ days: TripDay[] } | { error: string }> {
+  const user = await requireAuth();
+  const input = tripRequestSchema.safeParse({ destination, days });
+  if (!input.success) return { error: "请输入有效目的地及 1 至 14 天的整数天数" };
+  const prompt = `为「${input.data.destination}」生成 ${input.data.days} 天旅行计划，每天 3-4 个活动。仅返回 JSON：{"days":[{"dayNumber":1,"items":[{"time":"09:00","title":"活动名称","description":"活动说明","type":"景点"}]}]}。time 必须为 HH:mm；type 仅允许景点、美食、住宿、购物、休闲。天数从 1 连续排列。`;
   try {
-    const days: TripDay[] = [];
-
-    const dayBlocks = json.split(/"dayNumber"\s*:\s*/);
-    for (let i = 1; i < dayBlocks.length; i++) {
-      const block = dayBlocks[i];
-      const dayNumMatch = block.match(/^(\d+)/);
-      if (!dayNumMatch) continue;
-      const dayNum = parseInt(dayNumMatch[1]);
-
-      const items: TripDay["items"] = [];
-      const itemMatches = block.matchAll(
-        /\{\s*"time"\s*:\s*"([^"]*)"\s*,\s*"title"\s*:\s*"([^"]*)"\s*,\s*"description"\s*:\s*"([^"]*)"\s*,\s*"type"\s*:\s*"([^"]*)"\s*\}/g
-      );
-
-      for (const m of itemMatches) {
-        items.push({
-          time: m[1],
-          title: m[2],
-          description: m[3],
-          type: m[4],
-        });
-      }
-
-      if (items.length > 0) {
-        days.push({ dayNumber: dayNum, items });
-      }
-    }
-
-    return days.length > 0 ? days : null;
-  } catch {
-    return null;
-  }
-}
-
-function logJsonError(json: string, err: unknown) {
-  const msg = err instanceof SyntaxError ? err.message : String(err);
-  const posMatch = msg.match(/position (\d+)/);
-  if (posMatch) {
-    const pos = parseInt(posMatch[1]);
-    const start = Math.max(0, pos - 120);
-    const end = Math.min(json.length, pos + 120);
-    console.error(
-      "Trip generation JSON error at pos",
-      pos,
-      "context:",
-      json.slice(start, end)
-    );
-  }
-  console.error("Trip generation full JSON:", json.slice(0, 2000));
-}
-
-export async function generateTrip(
-  destination: string,
-  days: number
-): Promise<{ days: TripDay[] } | { error: string }> {
-  const prompt = `为「${destination}」生成一个${days}天的详细旅行行程计划。
-
-每天包含3-4个活动，覆盖上午、下午、晚上三个时段。
-每个活动需包含：时段标签（如"09:00"）、活动标题、简短描述（1-2句话）、类型（景点/美食/住宿/购物/休闲）。
-
-请严格返回JSON格式，不要包含其他文字：
-{
-  "days": [
-    {
-      "dayNumber": 1,
-      "items": [
-        { "time": "09:00", "title": "故宫", "description": "参观明清皇家宫殿，建议游览3小时", "type": "景点" }
-      ]
-    }
-  ]
-}`;
-
-  try {
-    const raw = await execFlyAI(prompt);
-
-    const json = extractJson(raw);
-    if (!json) {
-      console.error("Trip generation: no JSON match in", raw.slice(0, 300));
-      return { error: "AI 返回格式异常，请重试" };
-    }
-
-    let parsed: { days: TripDay[] };
-    try {
-      parsed = JSON.parse(json);
-    } catch (parseErr) {
-      logJsonError(json, parseErr);
-
-      const repaired = repairJson(json);
-      try {
-        parsed = JSON.parse(repaired);
-      } catch (repairErr) {
-        logJsonError(repaired, repairErr);
-
-        const fallback = tryParseLenient(json);
-        if (fallback) {
-          return { days: fallback };
-        }
-
-        console.error("Trip generation: all parse attempts failed");
-        return { error: "AI 返回数据解析失败，请重试" };
-      }
-    }
-
-    if (!parsed.days || !Array.isArray(parsed.days)) {
-      return { error: "AI 返回数据不完整，请重试" };
-    }
-
-    return { days: parsed.days as TripDay[] };
-  } catch (err) {
-    console.error("Trip generation error:", err);
-    return { error: "生成失败，请稍后重试" };
+    const raw = await queryTravelAI(user.id, prompt);
+    const cleaned = raw.replace(/```(?:json)?/gi, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    const result = z.object({ days: tripDaysSchema }).parse(JSON.parse(cleaned.slice(start, end + 1)));
+    if (result.days.length !== input.data.days) return { error: "生成的行程天数不完整，请重试" };
+    return result;
+  } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return { error: "AI 返回的行程格式异常，请重试" };
+    return { error: error instanceof Error ? error.message : "生成失败，请稍后重试" };
   }
 }
 
@@ -232,14 +34,16 @@ export async function saveTrip(formData: FormData) {
   const destination = formData.get("destination") as string;
   const daysJson = formData.get("daysJson") as string;
 
-  if (!title || !daysJson) throw new Error("缺少必要参数");
+  const input = z.object({ title: z.string().trim().min(1).max(100), destination: z.string().trim().max(100) }).parse({ title, destination });
+  if (typeof daysJson !== "string" || daysJson.length > 200000) throw new Error("行程数据无效");
+  const validatedDays = tripDaysSchema.parse(JSON.parse(daysJson));
 
   await prisma.tripPlan.create({
     data: {
       userId: user.id,
-      title,
-      destination: destination || null,
-      daysJson,
+      title: input.title,
+      destination: input.destination || null,
+      daysJson: JSON.stringify(validatedDays),
     },
   });
 

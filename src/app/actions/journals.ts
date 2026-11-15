@@ -3,39 +3,9 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { journalSchema } from "@/lib/validators";
-import { mkdir, writeFile } from "fs/promises";
+import { savePhotos, removeMedia } from "@/lib/media";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import path from "path";
-import crypto from "crypto";
-
-function generateFilename(originalName: string): string {
-  const ext = path.extname(originalName).toLowerCase() || ".jpg";
-  return `${crypto.randomUUID()}${ext}`;
-}
-
-async function savePhotos(
-  files: File[],
-  subdir: string
-): Promise<{ url: string; thumbnailUrl: string }[]> {
-  const results: { url: string; thumbnailUrl: string }[] = [];
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", subdir);
-
-  await mkdir(uploadsDir, { recursive: true });
-
-  for (const file of files) {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) continue;
-    if (file.size > 10 * 1024 * 1024) continue;
-
-    const filename = generateFilename(file.name);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadsDir, filename), buffer);
-
-    const url = `/uploads/${subdir}/${filename}`;
-    results.push({ url, thumbnailUrl: url });
-  }
-  return results;
-}
 
 export async function createJournal(formData: FormData) {
   const user = await requireAuth();
@@ -55,6 +25,7 @@ export async function createJournal(formData: FormData) {
 
   const coverImage = uploadedPhotos.length > 0 ? uploadedPhotos[0].url : null;
 
+  try {
   await prisma.journal.create({
     data: {
       userId: user.id,
@@ -72,6 +43,10 @@ export async function createJournal(formData: FormData) {
     },
   });
 
+  } catch (error) {
+    await removeMedia(uploadedPhotos);
+    throw error;
+  }
   revalidatePath("/journals");
   revalidatePath("/profile/journals");
   redirect("/profile/journals");
@@ -101,26 +76,20 @@ export async function updateJournal(journalId: string, formData: FormData) {
     ? await savePhotos(photoFiles, "journals")
     : [];
 
-  if (uploadedPhotos.length > 0) {
-    await prisma.journalPhoto.createMany({
-      data: uploadedPhotos.map((p, i) => ({
-        journalId,
-        url: p.url,
-        thumbnailUrl: p.thumbnailUrl,
-        sortOrder: (journal.photos?.length ?? 0) + i,
-      })),
+  try {
+    await prisma.journal.update({
+      where: { id: journalId },
+      data: {
+        title: data.title, content: data.content, region: data.region || null,
+        coverImage: journal.coverImage ?? uploadedPhotos[0]?.url ?? null,
+        photos: { create: uploadedPhotos.map((photo, index) => ({ ...photo, sortOrder: journal.photos.length + index })) },
+      },
     });
+  } catch (error) {
+    await removeMedia(uploadedPhotos);
+    throw error;
   }
-
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: {
-      title: data.title,
-      content: data.content,
-      region: data.region || null,
-    },
-  });
-
+  revalidatePath(`/journals/${journalId}`);
   revalidatePath("/journals");
   revalidatePath("/profile/journals");
   redirect("/profile/journals");
@@ -129,12 +98,13 @@ export async function updateJournal(journalId: string, formData: FormData) {
 export async function deleteJournal(id: string) {
   const user = await requireAuth();
 
-  const journal = await prisma.journal.findUnique({ where: { id } });
+  const journal = await prisma.journal.findUnique({ where: { id }, include: { photos: true } });
   if (!journal || journal.userId !== user.id) {
     throw new Error("无权删除此游记");
   }
 
   await prisma.journal.delete({ where: { id } });
+  await removeMedia(journal.photos);
 
   revalidatePath("/journals");
   revalidatePath("/profile/journals");

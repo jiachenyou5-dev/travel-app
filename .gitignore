@@ -48,3 +48,13 @@ next-env.d.ts
 
 # prisma generated client (rebuild with: npx prisma generate)
 src/generated/
+
+!.env.example
+/test-results/
+/playwright-report/
+/poi-audit.json
+/.backups/
+
+*.zip
+/public/uploads/
+/pages-dist/

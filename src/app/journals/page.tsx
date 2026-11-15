@@ -1,7 +1,9 @@
+import { pageNumber } from "@/lib/pagination";
+import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Heart, MessageCircle } from "lucide-react";
+import { BookOpen, Heart, MessageCircle } from "@/components/ui/clay-icons";
 import { RegionFilter } from "@/components/journals/region-filter";
 import { Suspense } from "react";
 
@@ -13,30 +15,34 @@ export const metadata = {
 export default async function JournalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string }>;
+  searchParams: Promise<{ region?: string; page?: string }>;
 }) {
-  const { region } = await searchParams;
+  const { region, page: rawPage } = await searchParams;
 
   const where = {
     isPublished: true,
     ...(region ? { region } : {}),
   };
 
+  const total = await prisma.journal.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / 30));
+  const page = Math.min(pageNumber(rawPage), pageCount);
   const journals = await prisma.journal.findMany({
     where,
-    orderBy: [{ likeCount: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ likeCount: "desc" }, { createdAt: "desc" }, { id: "desc" }],
     include: {
       user: { select: { name: true } },
       photos: { take: 1, orderBy: { sortOrder: "asc" } },
       _count: { select: { comments: true } },
     },
     take: 30,
+    skip: (page - 1) * 30,
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">游记</h1>
+        <h1 className="text-3xl font-medium tracking-tight text-foreground">旅途中的故事</h1>
         <Link
           href="/profile/journals/new"
           className="text-primary hover:underline text-sm"
@@ -53,8 +59,8 @@ export default async function JournalsPage({
       </div>
 
       {journals.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <BookOpen className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        <div className="rounded-xl bg-secondary py-20 px-6 text-center text-muted-foreground">
+          <BookOpen className="size-24 mx-auto mb-4" />
           <p>{region ? `暂无「${region}」地区的游记` : "还没有游记"}</p>
           <p className="text-sm mt-1">成为第一个分享旅行故事的人</p>
         </div>
@@ -72,7 +78,7 @@ export default async function JournalsPage({
                     />
                   </div>
                 ) : (
-                  <div className="h-40 bg-gradient-to-br from-primary/15 to-secondary/15 rounded-t-xl flex items-center justify-center img-zoom">
+                  <div className="h-40 bg-[var(--clay-peach)] rounded-t-xl flex items-center justify-center img-zoom">
                     <BookOpen className="w-10 h-10 text-primary/40" />
                   </div>
                 )}
@@ -109,6 +115,7 @@ export default async function JournalsPage({
           ))}
         </div>
       )}
+      <Pagination page={page} pageCount={pageCount} pathname="/journals" filters={region ? { region } : {}} />
     </div>
   );
 }

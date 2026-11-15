@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { MapPin } from "@/components/ui/clay-icons";
 
 export default function NotFound() {
   return (

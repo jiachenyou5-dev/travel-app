@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart, Bookmark, MessageCircle } from "lucide-react";
-import { toggleJournalLike, toggleJournalFavorite } from "@/app/actions/journal-interactions";
+import { Heart, Bookmark, MessageCircle } from "@/components/ui/clay-icons";
+import { setJournalLike, setJournalFavorite } from "@/app/actions/journal-interactions";
 import { useRouter } from "next/navigation";
 
 interface JournalInteractionBarProps {
@@ -32,9 +32,9 @@ export function JournalInteractionBar({
   function handleLike() {
     startTransition(async () => {
       try {
-        const result = await toggleJournalLike(journalId);
+        const result = await setJournalLike(journalId, !liked);
         setLiked(result.liked);
-        setLikeCount((prev) => (result.liked ? prev + 1 : prev - 1));
+        setLikeCount(result.likeCount);
         if (result.liked) {
           setBeating(true);
           setTimeout(() => setBeating(false), 400);
@@ -48,7 +48,7 @@ export function JournalInteractionBar({
   function handleFavorite() {
     startTransition(async () => {
       try {
-        const result = await toggleJournalFavorite(journalId);
+        const result = await setJournalFavorite(journalId, !favorited);
         setFavorited(result.favorited);
       } catch {
         router.push("/login");
@@ -70,7 +70,7 @@ export function JournalInteractionBar({
         title={liked ? "取消点赞" : "点赞"}
       >
         <Heart
-          className={`w-4 h-4 transition-transform ${liked ? "fill-current" : ""} ${beating ? "animate-[heart-beat_0.4s_ease]" : ""}`}
+          className={`w-4 h-4 transition-transform ${liked ? "" : "grayscale opacity-50"} ${beating ? "animate-[heart-beat_0.4s_ease]" : ""}`}
         />
         <span>{likeCount}</span>
       </button>
@@ -87,7 +87,7 @@ export function JournalInteractionBar({
         title={favorited ? "取消收藏" : "收藏"}
       >
         <Bookmark
-          className={`w-4 h-4 transition-transform ${favorited ? "fill-current" : ""}`}
+          className={`w-4 h-4 transition-transform ${favorited ? "" : "grayscale opacity-50"}`}
         />
         <span>{favorited ? "已收藏" : "收藏"}</span>
       </button>

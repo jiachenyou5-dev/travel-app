@@ -22,7 +22,7 @@ export default async function SubmitDestinationPage() {
 
       <div className="mt-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">提交新目的地</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">提交新目的地</h1>
           <p className="text-sm text-muted-foreground mt-1">
             提交的目的地需要管理员审核后才会公开展示
           </p>

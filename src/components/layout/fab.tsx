@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, X, PenLine, CalendarPlus } from "lucide-react";
+import { Plus, X, PenLine, CalendarPlus } from "@/components/ui/clay-icons";
 
 export function Fab() {
   const [open, setOpen] = useState(false);

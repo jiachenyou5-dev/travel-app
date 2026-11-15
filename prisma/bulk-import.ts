@@ -21,9 +21,9 @@ const CITIES: { nameZh: string; province: string; searchCity: string }[] = [
 ];
 
 const TYPES = {
-  attraction: "110000|120000|140000|140300",
+  attraction: "110000",
   restaurant: "050000",
-  accommodation: "060000|080000",
+  accommodation: "100000",
 };
 
 function sleep(ms: number) {
@@ -71,9 +71,9 @@ async function main() {
     await sleep(300);
 
     const [attractions, restaurants, accommodations] = await Promise.all([
-      poiSearch(city.searchCity, undefined, TYPES.attraction),
-      poiSearch(city.searchCity, undefined, TYPES.restaurant),
-      poiSearch(city.searchCity, undefined, TYPES.accommodation),
+      poiSearch("", city.searchCity, TYPES.attraction),
+      poiSearch("", city.searchCity, TYPES.restaurant),
+      poiSearch("", city.searchCity, TYPES.accommodation),
     ]);
 
     console.log(

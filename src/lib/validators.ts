@@ -1,73 +1,73 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  name: z.string().min(1, "请输入用户名"),
-  email: z.string().email("请输入有效的邮箱地址"),
-  password: z.string().min(6, "密码至少 6 位"),
+  name: z.string().trim().min(1, "请输入用户名").max(50),
+  email: z.string().trim().toLowerCase().email("请输入有效的邮箱地址"),
+  password: z.string().min(6, "密码至少 6 位").refine(value => new TextEncoder().encode(value).length <= 72, "密码不能超过 72 字节"),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
-  password: z.string().min(1, "请输入密码"),
+  email: z.string().trim().toLowerCase().email("请输入有效的邮箱地址"),
+  password: z.string().trim().min(1, "请输入密码"),
 });
 
 export const destinationSchema = z.object({
-  nameZh: z.string().min(1, "请输入目的地名称"),
-  nameEn: z.string().optional(),
-  province: z.string().optional(),
-  description: z.string().optional(),
-  country: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  nameZh: z.string().trim().min(1, "请输入目的地名称").max(100),
+  nameEn: z.string().trim().max(500).optional(),
+  province: z.string().trim().max(500).optional(),
+  description: z.string().trim().max(20000).optional(),
+  country: z.string().trim().max(500).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const attractionSchema = z.object({
-  nameZh: z.string().min(1, "请输入景点名称"),
-  nameEn: z.string().optional(),
-  description: z.string().optional(),
-  address: z.string().optional(),
-  ticketPrice: z.number().optional(),
-  openingHours: z.string().optional(),
-  website: z.string().optional(),
-  phone: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  nameZh: z.string().trim().min(1, "请输入景点名称").max(100),
+  nameEn: z.string().trim().max(500).optional(),
+  description: z.string().trim().max(20000).optional(),
+  address: z.string().trim().max(500).optional(),
+  ticketPrice: z.number().nonnegative().optional(),
+  openingHours: z.string().trim().max(500).optional(),
+  website: z.union([z.literal(""), z.url().refine(value => /^https?:/.test(value), "仅支持 HTTP 或 HTTPS 地址")]).optional(),
+  phone: z.string().trim().max(500).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const restaurantSchema = z.object({
-  nameZh: z.string().min(1, "请输入餐厅名称"),
-  nameEn: z.string().optional(),
-  description: z.string().optional(),
-  address: z.string().optional(),
-  cuisineType: z.string().optional(),
-  priceRange: z.string().optional(),
-  openingHours: z.string().optional(),
-  website: z.string().optional(),
-  phone: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  nameZh: z.string().trim().min(1, "请输入餐厅名称").max(100),
+  nameEn: z.string().trim().max(500).optional(),
+  description: z.string().trim().max(20000).optional(),
+  address: z.string().trim().max(500).optional(),
+  cuisineType: z.string().trim().max(500).optional(),
+  priceRange: z.string().trim().max(500).optional(),
+  openingHours: z.string().trim().max(500).optional(),
+  website: z.union([z.literal(""), z.url().refine(value => /^https?:/.test(value), "仅支持 HTTP 或 HTTPS 地址")]).optional(),
+  phone: z.string().trim().max(500).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const accommodationSchema = z.object({
-  nameZh: z.string().min(1, "请输入住宿名称"),
-  nameEn: z.string().optional(),
-  description: z.string().optional(),
-  address: z.string().optional(),
-  accommodationType: z.string().optional(),
-  priceRange: z.string().optional(),
-  starRating: z.number().optional(),
-  amenities: z.string().optional(),
-  phone: z.string().optional(),
-  website: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  nameZh: z.string().trim().min(1, "请输入住宿名称").max(100),
+  nameEn: z.string().trim().max(500).optional(),
+  description: z.string().trim().max(20000).optional(),
+  address: z.string().trim().max(500).optional(),
+  accommodationType: z.string().trim().max(500).optional(),
+  priceRange: z.string().trim().max(500).optional(),
+  starRating: z.number().int().min(1).max(5).optional(),
+  amenities: z.string().trim().max(500).optional(),
+  phone: z.string().trim().max(500).optional(),
+  website: z.union([z.literal(""), z.url().refine(value => /^https?:/.test(value), "仅支持 HTTP 或 HTTPS 地址")]).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const reviewSchema = z.object({
-  rating: z.number().min(1).max(5),
-  title: z.string().optional(),
-  content: z.string().min(1, "请输入评论内容"),
-  visitDate: z.string().optional(),
+  rating: z.number().int().min(1).max(5),
+  title: z.string().trim().max(100).optional(),
+  content: z.string().trim().min(1, "请输入评论内容").max(2000),
+  visitDate: z.iso.date().optional(),
 });
 
 export const REGIONS = [
@@ -83,9 +83,9 @@ export const REGIONS = [
 ] as const;
 
 export const journalSchema = z.object({
-  title: z.string().min(1, "请输入游记标题"),
-  content: z.string().min(1, "请输入游记内容"),
-  region: z.string().optional(),
+  title: z.string().trim().min(1, "请输入游记标题").max(100),
+  content: z.string().trim().min(1, "请输入游记内容").max(50000),
+  region: z.enum(REGIONS).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

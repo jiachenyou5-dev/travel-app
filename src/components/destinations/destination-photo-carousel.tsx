@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronRight } from "@/components/ui/clay-icons";
 
 interface Photo {
   id: string;
@@ -41,8 +41,8 @@ export function DestinationPhotoCarousel({
 
   if (total === 0) {
     return (
-      <div className="h-40 bg-gradient-to-br from-primary/15 to-primary/5 rounded-t-lg flex items-center justify-center">
-        <MapPin className="w-10 h-10 text-primary/40" />
+      <div className="h-40 bg-secondary rounded-t-lg flex items-center justify-center">
+        <MapPin className="size-20" />
       </div>
     );
   }

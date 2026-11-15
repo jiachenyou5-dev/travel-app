@@ -2,7 +2,7 @@
 
 import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil } from "@/components/ui/clay-icons";
 import { ImageGrid } from "@/components/ui/image-upload";
 import { useState } from "react";
 import { Lightbox } from "@/components/ui/lightbox";
@@ -19,6 +19,7 @@ interface ReviewCardProps {
     photos: { id: string; url: string; thumbnailUrl?: string | null }[];
   };
   currentUserId?: string;
+  isAdmin?: boolean;
   reviewUserId: string;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -27,6 +28,7 @@ interface ReviewCardProps {
 export function ReviewCard({
   review,
   currentUserId,
+  isAdmin = false,
   reviewUserId,
   onDelete,
   onEdit,
@@ -57,12 +59,13 @@ export function ReviewCard({
           <StarRatingDisplay rating={review.rating} />
         </div>
 
-        {isOwner && (
+        {(isOwner || isAdmin) && (
           <div className="flex items-center gap-1">
-            {onEdit && (
+            {isOwner && onEdit && (
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label="编辑评论"
                 onClick={() => onEdit(review.id)}
               >
                 <Pencil className="w-4 h-4" />
@@ -72,6 +75,7 @@ export function ReviewCard({
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label="删除评论"
                 onClick={() => onDelete(review.id)}
               >
                 <Trash2 className="w-4 h-4 text-destructive" />

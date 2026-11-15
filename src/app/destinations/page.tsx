@@ -1,23 +1,34 @@
+import { pageNumber } from "@/lib/pagination";
+import { Pagination } from "@/components/ui/pagination";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { safeAuth } from "@/lib/auth-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Plus } from "lucide-react";
+import { DestinationCard } from "@/components/destinations/destination-card";
+import { MapPin, Plus } from "@/components/ui/clay-icons";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Button } from "@/components/ui/button";
-import { DestinationPhotoCarousel } from "@/components/destinations/destination-photo-carousel";
+
 
 export default async function DestinationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submitted?: string }>;
+  searchParams: Promise<{ submitted?: string; page?: string; q?: string; province?: string }>;
 }) {
-  const { submitted } = await searchParams;
+  const { submitted, page: rawPage, q: rawQuery, province: rawProvince } = await searchParams;
+  const q = rawQuery?.trim().slice(0, 100) ?? "";
+  const province = rawProvince?.trim().slice(0, 50) ?? "";
+  const where = { isPublished: true, status: "APPROVED" as const, ...(q ? { nameZh: { contains: q } } : {}), ...(province ? { province: { contains: province } } : {}) };
+  const total = await prisma.destination.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / 12));
+  const page = Math.min(pageNumber(rawPage), pageCount);
 
   const [destinations, session] = await Promise.all([
     prisma.destination.findMany({
-      where: { isPublished: true, status: "APPROVED" },
-      orderBy: { createdAt: "desc" },
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 12,
+      skip: (page - 1) * 12,
       include: {
         displayPhotos: {
           orderBy: { sortOrder: "asc" },
@@ -30,11 +41,17 @@ export default async function DestinationsPage({
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
       <BreadcrumbNav items={[{ label: "目的地" }]} />
 
-      <h1 className="text-2xl font-bold text-foreground mb-4">旅游目的地</h1>
+      <h1 className="text-3xl font-medium tracking-tight text-foreground mb-4">旅游目的地</h1>
+      <p className="mb-9 mt-3 text-muted-foreground">从一座城市开始，发现值得出发的理由。</p>
 
+      <form action="/destinations" className="flex flex-wrap gap-3 mb-8 rounded-lg bg-secondary p-4 sm:p-5">
+        <Input name="q" aria-label="目的地关键词" placeholder="搜索目的地" defaultValue={q} maxLength={100} className="w-48" />
+        <Input name="province" aria-label="省份筛选" placeholder="省份" defaultValue={province} maxLength={50} className="w-40" />
+        <Button type="submit">筛选</Button>
+      </form>
       {submitted === "1" && (
         <div className="mb-6 rounded-lg border border-success/25 bg-success/10 px-4 py-3 text-sm text-success-foreground">
           目的地已提交，等待管理员审核后公开展示。
@@ -60,28 +77,10 @@ export default async function DestinationsPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 card-stagger">
-          {destinations.map((d) => (
-            <Link key={d.id} href={`/destinations/${d.id}`}>
-              <Card className="card-float h-full">
-                <DestinationPhotoCarousel photos={d.displayPhotos} />
-                <CardHeader>
-                  <CardTitle className="text-lg">{d.nameZh}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {d.province ? `${d.province} · ` : ""}{d.country}
-                  </p>
-                  {d.description && (
-                    <p className="text-sm text-muted-foreground/70 mt-2 line-clamp-2">
-                      {d.description}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {destinations.map((destination, index) => <DestinationCard key={destination.id} destination={destination} index={index} />)}
         </div>
       )}
+      <Pagination page={page} pageCount={pageCount} pathname="/destinations" filters={{ q, province }} />
     </div>
   );
 }

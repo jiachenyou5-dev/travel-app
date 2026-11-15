@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageCircle, X, Send, Plane } from "lucide-react";
+import { MessageCircle, X, Send, Plane } from "@/components/ui/clay-icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -62,8 +62,9 @@ export function TravelAdvisorWidget() {
     setIsLoading(true);
     setError(null);
 
+    try {
     const history = messages
-      .filter((m) => m.id !== "welcome")
+      .filter((m) => m.id !== "welcome").slice(-5)
       .map((m) => ({ role: m.role, content: m.content }));
 
     const result = await sendMessage(history, trimmed);
@@ -79,7 +80,11 @@ export function TravelAdvisorWidget() {
       setMessages((prev) => [...prev, assistantMessage]);
     }
 
-    setIsLoading(false);
+    } catch {
+      setError("发送失败，请确认已登录后重试");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -94,10 +99,9 @@ export function TravelAdvisorWidget() {
       <Button
         onClick={() => setIsOpen(!isOpen)}
         size="icon"
-        // 加号按钮容器为 right-24(96px)，本按钮在其左侧 w-12(48px) + gap(12px) → right-[156px]
         style={{ position: "fixed" }}
         className={cn(
-          "right-[156px] bottom-6 z-40 h-12 w-12 rounded-full shadow-lg transition-all duration-200 hover:scale-110",
+          "right-6 bottom-6 z-40 h-12 w-12 rounded-full shadow-lg transition-all duration-200 hover:scale-110",
           isOpen
             ? "bg-foreground/80 hover:bg-foreground"
             : "bg-primary hover:bg-primary/85"
@@ -112,15 +116,16 @@ export function TravelAdvisorWidget() {
       </Button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 flex max-h-[calc(100vh-7rem)] w-[400px] max-w-[calc(100vw-3rem)] flex-col rounded-xl border bg-background shadow-2xl">
+        <div className="fixed bottom-24 right-6 z-40 flex max-h-[calc(100vh-7rem)] w-[400px] max-w-[calc(100vw-3rem)] flex-col rounded-xl border bg-background shadow-lg">
           <div className="flex shrink-0 items-center gap-2 rounded-t-xl bg-primary px-4 py-3 text-primary-foreground">
             <Plane className="h-5 w-5" />
             <span className="flex-1 font-semibold">旅游顾问</span>
-            <span className="text-xs text-white/70">Powered by FlyAI</span>
+            <span className="text-xs text-white/70">聊聊你的下一站</span>
             <Button
               size="icon-sm"
               variant="ghost"
               className="h-7 w-7 text-white hover:bg-white/20"
+              aria-label="关闭顾问窗口"
               onClick={() => setIsOpen(false)}
             >
               <X className="h-4 w-4" />

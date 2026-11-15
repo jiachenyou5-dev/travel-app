@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "@/components/ui/clay-icons";
 import { deleteAccommodation } from "./actions";
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ export default async function AdminAccommodationsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-foreground">住宿管理</h1>
+        <div><h1 className="text-3xl font-medium tracking-tight text-foreground">住宿管理</h1><Link href="/admin/accommodations/pending" className="text-primary hover:underline">审核住宿投稿</Link></div>
         <Link href="/admin/accommodations/new">
           <Button className="gap-2">
             <Plus className="w-4 h-4" />

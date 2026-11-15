@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
-import { MessageSquare, Star, Image } from "lucide-react";
+import { MessageSquare, Star, ImageIcon } from "@/components/ui/clay-icons";
 
 export default async function ProfilePage() {
   const sessionUser = await requireAuth();
@@ -53,7 +53,7 @@ export default async function ProfilePage() {
               <div className="text-xs text-muted-foreground">评论</div>
             </div>
             <div className="text-center p-3 bg-muted rounded-lg">
-              <Image className="w-5 h-5 text-success mx-auto mb-1" />
+              <ImageIcon className="w-5 h-5 text-success mx-auto mb-1" />
               <div className="text-lg font-bold">{user._count.photos}</div>
               <div className="text-xs text-muted-foreground">照片</div>
             </div>

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock } from "@/components/ui/clay-icons";
 import { deleteAttraction } from "./actions";
 import {
   AlertDialog,
@@ -47,7 +47,7 @@ export default async function AdminAttractionsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">景点管理</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">景点管理</h1>
           {pendingCount > 0 && (
             <Link
               href="/admin/attractions/pending"

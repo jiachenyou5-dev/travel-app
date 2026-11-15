@@ -4,8 +4,13 @@
  * 用法：npx tsx prisma/seed.ts
  */
 import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaLibSql({
+  url: process.env.DATABASE_URL || "file:../dev.db",
+});
+const prisma = new PrismaClient({ adapter });
 
 // ============= 管理员账号 =============
 const adminUser = {
@@ -96,7 +101,7 @@ const suzhouAttractions = [
   {
     id: "attr_suzhou_004", destinationId: "dest_suzhou",
     nameZh: "狮子林", nameEn: "Lion Grove Garden",
-    description: "苏州四大名园之一，以假山著称，假山群峰起伏，形态各异，被誉为"假山王国"。",
+    description: "苏州四大名园之一，以假山著称，假山群峰起伏，形态各异。",
     address: "苏州市姑苏区园林路23号", latitude: 31.3244, longitude: 120.6320,
     ticketPrice: 40, openingHours: "7:30-17:00",
   },

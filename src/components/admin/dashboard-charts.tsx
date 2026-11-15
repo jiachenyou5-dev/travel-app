@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MapPin, Star, Globe } from "@/components/ui/clay-icons";
 
 interface DestinationRating {
   name: string;
@@ -77,7 +78,7 @@ function DestinationRatingChart({ data }: { data: DestinationRating[] }) {
 
   return (
     <div className="rounded-lg border p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-4">📍 各目的地平均评分</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-4"><MapPin className="mr-1.5 size-5" />各目的地平均评分</h3>
       <div className="space-y-3">
         {sorted.map((item) => {
           const pct = (item.avgRating / maxRating) * 100;
@@ -133,7 +134,7 @@ function RatingPieChart({
 
   return (
     <div className="rounded-lg border p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-4">⭐ 星级分布</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-4"><Star className="mr-1.5 size-5" />星级分布</h3>
       <div className="space-y-2.5">
         {[5, 4, 3, 2, 1].map((star) => {
           const count = ratingMap.get(star) || 0;
@@ -169,9 +170,8 @@ function RatingPieChart({
 /** 内容类型占比环形图 (纯 SVG) */
 function ContentDonutChart({ data }: { data: ContentTypeCount[] }) {
   const total = data.reduce((s, d) => s + d.count, 0);
-  if (total === 0) return null;
-
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  if (total === 0) return null;
 
   const radius = 50;
   const cx = 60;
@@ -179,18 +179,17 @@ function ContentDonutChart({ data }: { data: ContentTypeCount[] }) {
   const strokeWidth = 20;
   const circumference = 2 * Math.PI * radius;
 
-  let cumulativePercent = 0;
   const segments = data.map((item, i) => {
     const percent = item.count / total;
     const dashArray = `${circumference * percent} ${circumference * (1 - percent)}`;
-    const dashOffset = -circumference * cumulativePercent;
-    cumulativePercent += percent;
+    const precedingCount = data.slice(0, i).reduce((sum, entry) => sum + entry.count, 0);
+    const dashOffset = -circumference * precedingCount / total;
     return { ...item, dashArray, dashOffset, index: i };
   });
 
   return (
     <div className="rounded-lg border p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-4">📊 内容占比</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-4"><Globe className="mr-1.5 size-5" />内容占比</h3>
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 120 120" className="w-28 h-28 shrink-0">
           {segments.map((seg) => (

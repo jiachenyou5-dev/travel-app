@@ -6,7 +6,8 @@ import { FavoriteButton } from "@/components/ui/favorite-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AmapView } from "@/components/ui/amap-view";
 import { DestinationTabs } from "./tabs";
-import { MapPin } from "lucide-react";
+import Image from "next/image";
+import { MapPin } from "@/components/ui/clay-icons";
 
 export default async function DestinationDetailPage({
   params,
@@ -24,7 +25,7 @@ export default async function DestinationDetailPage({
       include: {
         attractions: { where: { isPublished: true, status: "APPROVED" }, take: 6 },
         restaurants: { where: { isPublished: true, status: "APPROVED" }, take: 6 },
-        accommodations: { where: { isPublished: true }, take: 6 },
+        accommodations: { where: { isPublished: true, status: "APPROVED" }, take: 6 },
         displayPhotos: { orderBy: { sortOrder: "asc" } },
       },
     }),
@@ -40,7 +41,7 @@ export default async function DestinationDetailPage({
         where: { destinationId, isPublished: true, status: "APPROVED" },
       }),
       prisma.accommodation.count({
-        where: { destinationId, isPublished: true },
+        where: { destinationId, isPublished: true, status: "APPROVED" },
       }),
     ]);
 
@@ -65,10 +66,10 @@ export default async function DestinationDetailPage({
         ]}
       />
 
-      <div className="mb-8">
+      <div className="relative mb-10 min-h-[230px] overflow-hidden rounded-xl bg-secondary p-6 sm:p-9 lg:pr-[38%]">
         <div className="flex items-center gap-3 mb-4">
           <MapPin className="w-6 h-6 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-[42px] font-medium tracking-tight text-foreground">
             {destination.nameZh}
           </h1>
           <FavoriteButton
@@ -97,6 +98,7 @@ export default async function DestinationDetailPage({
             住宿已提交，等待管理员审核后公开展示。
           </div>
         )}
+        <div className="absolute right-0 bottom-0 hidden h-full w-[35%] lg:block"><Image src="/images/clay/hero.png" loading="eager" alt="旅行主题黏土插画" fill sizes="400px" className="object-contain" /></div>
         {destination.description && (
           <p className="text-muted-foreground mt-4 max-w-3xl">
             {destination.description}
@@ -104,6 +106,17 @@ export default async function DestinationDetailPage({
         )}
       </div>
 
+      <DestinationTabs
+        destination={destination}
+        counts={{
+          attractions: attractionCount,
+          restaurants: restaurantCount,
+          accommodations: accommodationCount,
+        }}
+        isLoggedIn={!!session?.user}
+        isAdmin={isAdmin}
+      />
+      <div className="mt-10">
       {destination.latitude != null && destination.longitude != null && (
         <Card className="mb-8">
           <CardHeader>
@@ -125,16 +138,7 @@ export default async function DestinationDetailPage({
         </Card>
       )}
 
-      <DestinationTabs
-        destination={destination}
-        counts={{
-          attractions: attractionCount,
-          restaurants: restaurantCount,
-          accommodations: accommodationCount,
-        }}
-        isLoggedIn={!!session?.user}
-        isAdmin={isAdmin}
-      />
+      </div>
     </div>
   );
 }

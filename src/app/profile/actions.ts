@@ -2,16 +2,17 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
+import { z } from "zod";
+import { registerSchema } from "@/lib/validators";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 export async function updateProfile(formData: FormData) {
   const user = await requireAuth();
 
-  const name = formData.get("name") as string;
-  if (!name || name.length < 1) {
-    return { error: "昵称不能为空" };
-  }
+  const parsed = z.string().trim().min(1).max(50).safeParse(formData.get("name"));
+  if (!parsed.success) return { error: "昵称应为 1 至 50 字" };
+  const name = parsed.data;
 
   await prisma.user.update({
     where: { id: user.id },
@@ -33,8 +34,8 @@ export async function changePassword(formData: FormData) {
     return { error: "请填写所有密码字段" };
   }
 
-  if (newPassword.length < 6) {
-    return { error: "新密码至少 6 个字符" };
+  if (!registerSchema.shape.password.safeParse(newPassword).success) {
+    return { error: "新密码至少 6 个字符且不能超过 72 字节" };
   }
 
   if (newPassword !== confirmPassword) {

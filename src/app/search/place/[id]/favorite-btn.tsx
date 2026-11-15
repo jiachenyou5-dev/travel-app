@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
+import { Heart } from "@/components/ui/clay-icons";
 import { toast } from "sonner";
 import { togglePoiFavorite, checkPoiFavorited } from "@/app/actions/poi-favorites";
 
@@ -49,7 +49,7 @@ export function PoiFavoriteButton({ poi }: PoiFavoriteButtonProps) {
           : { borderColor: "var(--color-border)", color: "var(--color-muted-foreground)" }
       }
     >
-      <Heart className={`w-4 h-4 ${favorited ? "fill-current" : ""}`} />
+      <Heart className={`w-4 h-4 ${favorited ? "" : "grayscale opacity-50"}`} />
       {favorited ? "已收藏" : "收藏"}
     </button>
   );

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart } from "lucide-react";
-import { toggleFavorite } from "@/app/actions/favorites";
+import { Heart } from "@/components/ui/clay-icons";
+import { setFavorite } from "@/app/actions/favorites";
 import { useRouter } from "next/navigation";
 
 export function FavoriteButton({
@@ -22,7 +22,7 @@ export function FavoriteButton({
   function handleClick() {
     startTransition(async () => {
       try {
-        const result = await toggleFavorite(entityType, entityId);
+        const result = await setFavorite(entityType, entityId, !favorited);
         setFavorited(result.favorited);
         if (result.favorited) {
           setBeating(true);
@@ -47,7 +47,7 @@ export function FavoriteButton({
       title={favorited ? "取消收藏" : "收藏"}
     >
       <Heart
-        className={`w-5 h-5 transition-transform ${favorited ? "fill-current" : ""} ${beating ? "animate-[heart-beat_0.4s_ease]" : ""}`}
+        className={`w-5 h-5 transition-transform ${favorited ? "" : "grayscale opacity-50"} ${beating ? "animate-[heart-beat_0.4s_ease]" : ""}`}
       />
     </button>
   );

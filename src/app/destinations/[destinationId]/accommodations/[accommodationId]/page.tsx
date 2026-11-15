@@ -4,7 +4,7 @@ import { safeAuth } from "@/lib/auth-utils";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Globe, Hotel, Wifi } from "lucide-react";
+import { MapPin, Phone, Globe, Hotel, Wifi } from "@/components/ui/clay-icons";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { AmapView } from "@/components/ui/amap-view";
 import { EntityTabsSection } from "@/components/reviews/entity-tabs-section";
@@ -17,8 +17,8 @@ export default async function AccommodationDetailPage({
   const { destinationId, accommodationId } = await params;
 
   const [accommodation, session] = await Promise.all([
-    prisma.accommodation.findUnique({
-      where: { id: accommodationId },
+    prisma.accommodation.findFirst({
+      where: { id: accommodationId, destinationId, destination: { isPublished: true, status: "APPROVED" } },
       include: {
         destination: { select: { id: true, nameZh: true } },
         displayPhotos: { orderBy: { sortOrder: "asc" } },
@@ -34,7 +34,7 @@ export default async function AccommodationDetailPage({
     safeAuth(),
   ]);
 
-  if (!accommodation || !accommodation.isPublished) notFound();
+  if (!accommodation || !accommodation.isPublished || accommodation.status !== "APPROVED") notFound();
 
   const currentUser = session?.user as
     | { id: string; name?: string; role?: string }

@@ -46,7 +46,7 @@ export default async function SubmitPhotosPage({
 
       <div className="mt-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">上传目的地照片</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">上传目的地照片</h1>
           <p className="text-sm text-muted-foreground mt-1">
             为 {destination.nameZh} 添加照片，上传后即可在目的地页面展示
           </p>

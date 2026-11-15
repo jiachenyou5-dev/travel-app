@@ -12,7 +12,7 @@ import {
   UtensilsCrossed,
   Hotel,
   Clock,
-} from "lucide-react";
+} from "@/components/ui/clay-icons";
 import { DashboardCharts } from "@/components/admin/dashboard-charts";
 
 export default async function AdminDashboard() {
@@ -31,10 +31,6 @@ export default async function AdminDashboard() {
     ratingDist,
     // 按目的地分组的评分
     destinationsWithReviews,
-    // 每个目的地的景点/美食/住宿数量
-    destAttrCounts,
-    destRestCounts,
-    destAccCounts,
   ] = await Promise.all([
     prisma.destination.count(),
     prisma.user.count(),
@@ -101,24 +97,9 @@ export default async function AdminDashboard() {
         },
       },
     }),
-    prisma.attraction.groupBy({
-      by: ["destinationId"],
-      _count: true,
-    }),
-    prisma.restaurant.groupBy({
-      by: ["destinationId"],
-      _count: true,
-    }),
-    prisma.accommodation.groupBy({
-      by: ["destinationId"],
-      _count: true,
-    }),
   ]);
 
   // 计算每个目的地的平均评分
-  const destAttrMap = new Map(destAttrCounts.map((d) => [d.destinationId, d._count]));
-  const destRestMap = new Map(destRestCounts.map((d) => [d.destinationId, d._count]));
-  const destAccMap = new Map(destAccCounts.map((d) => [d.destinationId, d._count]));
 
   const destinationRatings = destinationsWithReviews
     .map((dest) => {
@@ -172,7 +153,7 @@ export default async function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-foreground">管理后台</h1>
+        <h1 className="text-3xl font-medium tracking-tight text-foreground">管理后台</h1>
       </div>
 
       {/* 统计卡片 */}

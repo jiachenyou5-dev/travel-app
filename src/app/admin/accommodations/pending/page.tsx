@@ -1,0 +1,100 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ApproveButton } from "./approve-button";
+import { RejectDialog } from "./reject-dialog";
+
+export default async function PendingAccommodationsPage() {
+  const pending = await prisma.accommodation.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    include: {
+      destination: { select: { id: true, nameZh: true } },
+      submittedBy: { select: { name: true, email: true } },
+    },
+  });
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">待审核住宿</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {pending.length === 0
+              ? "暂无待审核住宿"
+              : `${pending.length} 个住宿等待审核`}
+          </p>
+        </div>
+        <Link href="/admin/accommodations">
+          <Button variant="outline">返回住宿管理</Button>
+        </Link>
+      </div>
+
+      {pending.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <p>没有待审核的住宿</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {pending.map((r) => (
+            <Card key={r.id}>
+              <CardContent className="py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-medium text-foreground">{r.nameZh}</h3>
+                      <Badge variant="secondary">待审核</Badge>
+                      {r.accommodationType && (
+                        <Badge variant="outline">{r.accommodationType}</Badge>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mb-1">
+                      所属目的地：
+                      <Link
+                        href={`/destinations/${r.destination.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {r.destination.nameZh}
+                      </Link>
+                      {r.address && ` · ${r.address}`}
+                    </p>
+
+                    {r.description && (
+                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                        {r.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground/70">
+                      {r.priceRange && <span>人均：{r.priceRange}</span>}
+
+                      {r.submittedBy && (
+                        <span>
+                          提交人：{r.submittedBy.name || r.submittedBy.email}
+                        </span>
+                      )}
+                      <span>
+                        提交时间：{r.createdAt.toLocaleDateString("zh-CN")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ApproveButton accommodationId={r.id} accommodationName={r.nameZh} />
+                    <RejectDialog
+                      accommodationId={r.id}
+                      accommodationName={r.nameZh}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

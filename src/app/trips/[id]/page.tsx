@@ -5,18 +5,11 @@ import { TripPlanCard } from "@/components/trips/trip-plan-card";
 import { Button } from "@/components/ui/button";
 import { deleteTrip } from "@/app/actions/trips";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "@/components/ui/clay-icons";
 import Link from "next/link";
+import { tripDaysSchema } from "@/lib/trip-schema";
+import type { TripDay } from "@/lib/trip-schema";
 
-interface TripDay {
-  dayNumber: number;
-  items: {
-    time: string;
-    title: string;
-    description: string;
-    type: string;
-  }[];
-}
 
 export default async function TripDetailPage({
   params,
@@ -32,7 +25,7 @@ export default async function TripDetailPage({
 
   let days: TripDay[] = [];
   try {
-    days = JSON.parse(trip.daysJson);
+    days = tripDaysSchema.parse(JSON.parse(trip.daysJson));
   } catch {
     days = [];
   }
@@ -48,7 +41,7 @@ export default async function TripDetailPage({
 
       <div className="flex items-start justify-between mt-6 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{trip.title}</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">{trip.title}</h1>
           {trip.destination && (
             <p className="text-muted-foreground mt-1">{trip.destination}</p>
           )}

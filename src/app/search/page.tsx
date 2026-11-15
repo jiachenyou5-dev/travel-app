@@ -2,9 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Building2, UtensilsCrossed, Hotel } from "lucide-react";
+import { Search, MapPin, Building2, UtensilsCrossed, Hotel } from "@/components/ui/clay-icons";
 import { poiSearch } from "@/lib/amap";
 
 export const dynamic = "force-dynamic";
@@ -20,21 +20,20 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const query = q?.trim();
+  const query = q?.trim().slice(0, 100);
 
   if (!query) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <Search className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">搜索</h1>
-        <p className="text-muted-foreground mb-8">搜索目的地、景点、美食、住宿</p>
-        <form action="/search" className="flex gap-2">
-          <Input name="q" placeholder="输入关键词..." className="h-11" />
-          <Button type="submit" className="gap-2">
-            <Search className="w-4 h-4" />
-            搜索
-          </Button>
-        </form>
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:min-h-[68vh] lg:grid-cols-[1fr_340px]">
+        <div>
+          <h1 className="text-[40px] font-medium tracking-tight">下一站，你想去哪里？</h1>
+          <p className="mt-4 mb-8 text-muted-foreground">搜索目的地、景点、美食、住宿，找到属于你的旅行灵感。</p>
+          <form action="/search" className="flex gap-3 rounded-lg bg-secondary p-4">
+            <Input name="q" aria-label="搜索关键词" placeholder="输入关键词..." maxLength={100} className="h-12" />
+            <Button type="submit" className="h-12 gap-2"><Search className="size-5" />搜索</Button>
+          </form>
+        </div>
+        <div className="flex items-center justify-center rounded-xl bg-[var(--clay-lavender)] p-10"><Search className="size-48" /></div>
       </div>
     );
   }
@@ -56,6 +55,7 @@ export default async function SearchPage({
       prisma.attraction.findMany({
         where: {
           isPublished: true,
+          destination: { isPublished: true, status: "APPROVED" },
           status: "APPROVED",
           OR: [
             { nameZh: { contains: query } },
@@ -72,6 +72,7 @@ export default async function SearchPage({
       prisma.restaurant.findMany({
         where: {
           isPublished: true,
+          destination: { isPublished: true, status: "APPROVED" },
           status: "APPROVED",
           OR: [
             { nameZh: { contains: query } },
@@ -89,6 +90,8 @@ export default async function SearchPage({
       prisma.accommodation.findMany({
         where: {
           isPublished: true,
+          status: "APPROVED",
+          destination: { isPublished: true, status: "APPROVED" },
           OR: [
             { nameZh: { contains: query } },
             { nameEn: { contains: query } },
@@ -137,7 +140,7 @@ export default async function SearchPage({
       ) : (
         <div className="space-y-8">
           <p className="text-sm text-muted-foreground">
-            找到 {totalResults} 条与「{query}」相关的结果
+            展示 {totalResults} 条与「{query}」相关的结果（本地每类最多 5 条，地图最多 10 条）
           </p>
 
           {destinations.length > 0 && (

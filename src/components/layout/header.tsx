@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MobileNav } from "./mobile-nav";
-import { MapPin, Search, BookOpen, Calendar } from "lucide-react";
+import { Compass, Search } from "@/components/ui/clay-icons";
 import { NavLink } from "./active-nav";
 
 export async function Header() {
@@ -21,33 +21,20 @@ export async function Header() {
     <header className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 text-primary font-bold text-lg">
-            <MapPin className="w-6 h-6" />
+          <Link href="/" className="flex items-center gap-2 text-foreground font-semibold text-lg tracking-tight">
+            <Compass className="size-10" />
             旅游管理
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
-            <NavLink href="/search">
-              <Search className="w-4 h-4 inline" />
-              <span className="ml-1">搜索</span>
-            </NavLink>
+          <nav aria-label="主导航" className="hidden md:flex items-center gap-9">
             <NavLink href="/destinations">目的地</NavLink>
-            <NavLink href="/journals">
-              <BookOpen className="w-4 h-4 inline" />
-              <span className="ml-1">游记</span>
-            </NavLink>
-            {user && (
-              <NavLink href="/trips">
-                <Calendar className="w-4 h-4 inline" />
-                <span className="ml-1">行程</span>
-              </NavLink>
-            )}
-            {user?.role === "ADMIN" && (
-              <NavLink href="/admin">管理后台</NavLink>
-            )}
+            <NavLink href="/journals">游记</NavLink>
+            <NavLink href={user ? "/trips" : "/trips/new"}>旅行计划</NavLink>
+            {user?.role === "ADMIN" && <NavLink href="/admin">管理后台</NavLink>}
           </nav>
 
           <div className="flex items-center gap-3">
+            <Link href="/search" className="hidden sm:flex items-center gap-1.5 mr-3 text-sm"><Search className="size-5" />搜索</Link>
             <MobileNav isAdmin={user?.role === "ADMIN"} isLoggedIn={!!user} />
             {user ? (
               <DropdownMenu>
@@ -85,14 +72,8 @@ export async function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login">
-                  <Button variant="ghost" size="sm">
-                    登录
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button size="sm">注册</Button>
-                </Link>
+                <Link href="/login" className="px-2 text-sm font-medium">登录</Link>
+                <Button nativeButton={false} render={<Link href="/register" />}>注册</Button>
               </div>
             )}
           </div>

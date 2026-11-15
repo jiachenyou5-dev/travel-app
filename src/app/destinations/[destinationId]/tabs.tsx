@@ -5,15 +5,17 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, UtensilsCrossed, Hotel, Plus, Image } from "lucide-react";
+import { Building2, UtensilsCrossed, Hotel, Plus, ImageIcon } from "@/components/ui/clay-icons";
 import { Button } from "@/components/ui/button";
 import { EntityPhotosSection } from "@/components/reviews/entity-photos-section";
 
+import type { Attraction, Restaurant, Accommodation } from "@/generated/prisma/client";
+
 interface Destination {
   id: string;
-  attractions: any[];
-  restaurants: any[];
-  accommodations: any[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  accommodations: Accommodation[];
   displayPhotos?: { id: string; url: string; altText?: string | null }[];
 }
 
@@ -36,7 +38,7 @@ export function DestinationTabs({
     <Tabs value={tab} onValueChange={setTab}>
       <TabsList>
         <TabsTrigger value="photos" className="gap-2">
-          <Image className="w-4 h-4" />
+          <ImageIcon className="w-4 h-4" />
           照片
           {photosCount > 0 && (
             <Badge variant="secondary" className="ml-1">

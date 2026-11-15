@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, ImageIcon } from "lucide-react";
+import { Upload, X, ImageIcon } from "@/components/ui/clay-icons";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 

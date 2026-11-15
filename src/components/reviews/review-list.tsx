@@ -1,8 +1,7 @@
 "use client";
 
 import { ReviewCard } from "./review-card";
-import { Button } from "@/components/ui/button";
-import { MessageSquareText } from "lucide-react";
+import { MessageSquareText } from "@/components/ui/clay-icons";
 
 interface Review {
   id: string;
@@ -19,6 +18,7 @@ interface Review {
 interface ReviewListProps {
   reviews: Review[];
   currentUserId?: string;
+  isAdmin?: boolean;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   pageSize?: number;
@@ -27,6 +27,7 @@ interface ReviewListProps {
 export function ReviewList({
   reviews,
   currentUserId,
+  isAdmin,
   onDelete,
   onEdit,
 }: ReviewListProps) {
@@ -49,6 +50,7 @@ export function ReviewList({
             createdAt: review.createdAt.toString(),
           }}
           currentUserId={currentUserId}
+          isAdmin={isAdmin}
           reviewUserId={review.userId}
           onDelete={onDelete}
           onEdit={onEdit}

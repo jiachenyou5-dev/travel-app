@@ -9,6 +9,20 @@ interface GeocodeResult {
   city: string;
 }
 
+async function amapFetch(url: string) {
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (data.status !== "1") console.error("[amap] upstream failure", { code: data.infocode, durationMs: Date.now() - startedAt });
+    return data;
+  } catch {
+    console.error("[amap] request failed", { durationMs: Date.now() - startedAt });
+    throw new Error("地图服务暂时不可用");
+  }
+}
+
 export async function geocode(
   address: string,
   city?: string
@@ -23,10 +37,7 @@ export async function geocode(
   if (city) params.set("city", city);
 
   try {
-    const res = await fetch(
-      `${AMAP_BASE}/geocode/geo?${params.toString()}`
-    );
-    const data = await res.json();
+    const data = await amapFetch(`${AMAP_BASE}/geocode/geo?${params.toString()}`);
     if (data.status !== "1" || !data.geocodes?.length) return null;
 
     const geo = data.geocodes[0];
@@ -57,10 +68,7 @@ export async function reverseGeocode(
   });
 
   try {
-    const res = await fetch(
-      `${AMAP_BASE}/geocode/regeo?${params.toString()}`
-    );
-    const data = await res.json();
+    const data = await amapFetch(`${AMAP_BASE}/geocode/regeo?${params.toString()}`);
     if (data.status !== "1" || !data.regeocode) return null;
     return data.regeocode.formatted_address || null;
   } catch {
@@ -91,14 +99,11 @@ export async function poiSearch(
     offset: "10",
     extensions: "base",
   });
-  if (city) params.set("city", city);
+  if (city) { params.set("city", city); params.set("citylimit", "true"); }
   if (types) params.set("types", types);
 
   try {
-    const res = await fetch(
-      `${AMAP_BASE}/place/text?${params.toString()}`
-    );
-    const data = await res.json();
+    const data = await amapFetch(`${AMAP_BASE}/place/text?${params.toString()}`);
     if (data.status !== "1" || !data.pois?.length) return [];
 
     return data.pois.map(
@@ -143,10 +148,7 @@ export async function getPoiDetail(
   });
 
   try {
-    const res = await fetch(
-      `${AMAP_BASE}/place/detail?${params.toString()}`
-    );
-    const data = await res.json();
+    const data = await amapFetch(`${AMAP_BASE}/place/detail?${params.toString()}`);
     if (data.status !== "1" || !data.pois?.length) return null;
 
     const poi = data.pois[0];
@@ -187,10 +189,7 @@ export async function nearbyPoiSearch(
   });
 
   try {
-    const res = await fetch(
-      `${AMAP_BASE}/place/around?${params.toString()}`
-    );
-    const data = await res.json();
+    const data = await amapFetch(`${AMAP_BASE}/place/around?${params.toString()}`);
     if (data.status !== "1" || !data.pois?.length) return [];
 
     return data.pois.map(

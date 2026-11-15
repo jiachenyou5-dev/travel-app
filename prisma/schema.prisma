@@ -37,6 +37,7 @@ model User {
   submissions             Attraction[]
   destinationSubmissions  Destination[] @relation("DestinationSubmissions")
   restaurantSubmissions   Restaurant[]  @relation("RestaurantSubmissions")
+  accommodationSubmissions Accommodation[] @relation("AccommodationSubmissions")
   tripPlans        TripPlan[]
   poiFavorites     PoiFavorite[]
   journals         Journal[]
@@ -188,6 +189,10 @@ model Accommodation {
   amenities         String?
   phone             String?
   website           String?
+  status            SubmissionStatus @default(APPROVED)
+  submittedById     String?
+  reviewNotes       String?
+  submittedBy       User? @relation("AccommodationSubmissions", fields: [submittedById], references: [id], onDelete: SetNull)
   isPublished       Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -272,6 +277,10 @@ model Favorite {
   restaurant    Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   accommodation Accommodation? @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, destinationId])
+  @@unique([userId, attractionId])
+  @@unique([userId, restaurantId])
+  @@unique([userId, accommodationId])
   @@map("favorites")
 }
 

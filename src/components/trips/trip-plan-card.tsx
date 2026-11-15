@@ -1,17 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Coffee, Moon, Sun, UtensilsCrossed, Building2, ShoppingBag } from "lucide-react";
-
-interface TripItem {
-  time: string;
-  title: string;
-  description: string;
-  type: string;
-}
-
-interface TripDay {
-  dayNumber: number;
-  items: TripItem[];
-}
+import { MapPin, Moon, Sun, UtensilsCrossed, Building2, ShoppingBag } from "@/components/ui/clay-icons";
+import type { TripDay } from "@/lib/trip-schema";
 
 function typeIcon(type: string) {
   switch (type) {

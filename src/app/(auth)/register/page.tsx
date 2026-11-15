@@ -1,22 +1,19 @@
 import Link from "next/link";
+import Image from "next/image";
 import { RegisterForm } from "./register-form";
 
-export default function RegisterPage() {
+export default function AuthPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm border p-8">
-          <h1 className="text-2xl font-bold text-center text-foreground mb-8">
-            注册
-          </h1>
-          <RegisterForm />
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            已有账号？
-            <Link href="/login" className="text-primary hover:underline ml-1">
-              登录
-            </Link>
-          </p>
-        </div>
+    <div className="mx-auto grid min-h-[72vh] max-w-6xl items-center gap-12 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:py-20">
+      <div className="relative hidden min-h-[510px] flex-col justify-between overflow-hidden rounded-xl bg-[var(--clay-lavender)] p-10 lg:flex">
+        <h2 className="relative z-10 text-[40px] leading-tight font-medium tracking-tight text-[#0a0a0a]">每一次出发，<br />都有新的故事。</h2>
+        <div className="absolute inset-x-0 bottom-0 h-[360px]"><Image src="/images/clay/hero.png" loading="eager" alt="黏土旅行世界插画" fill sizes="540px" className="object-contain" /></div>
+      </div>
+      <div className="mx-auto w-full max-w-md">
+        <h1 className="text-[36px] font-medium tracking-tight">从这里，开始旅程。</h1>
+        <p className="mt-3 mb-9 text-sm text-muted-foreground">创建账号，收藏目的地，分享旅行故事。</p>
+        <RegisterForm />
+        <p className="mt-7 text-sm text-muted-foreground">已有账号？<Link href="/login" className="ml-2 border-b border-foreground pb-0.5 text-foreground">登录</Link></p>
       </div>
     </div>
   );

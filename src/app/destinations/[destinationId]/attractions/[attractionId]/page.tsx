@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { safeAuth } from "@/lib/auth-utils";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Ticket, Clock, Phone, Globe } from "lucide-react";
+import { MapPin, Ticket, Clock, Phone, Globe } from "@/components/ui/clay-icons";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { AmapView } from "@/components/ui/amap-view";
 import { EntityTabsSection } from "@/components/reviews/entity-tabs-section";
@@ -16,8 +16,8 @@ export default async function AttractionDetailPage({
   const { destinationId, attractionId } = await params;
 
   const [attraction, session] = await Promise.all([
-    prisma.attraction.findUnique({
-      where: { id: attractionId },
+    prisma.attraction.findFirst({
+      where: { id: attractionId, destinationId, destination: { isPublished: true, status: "APPROVED" } },
       include: {
         destination: { select: { id: true, nameZh: true } },
         displayPhotos: { orderBy: { sortOrder: "asc" } },

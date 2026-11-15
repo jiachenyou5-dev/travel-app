@@ -3,19 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X } from "@/components/ui/clay-icons";
 
 export function MobileNav({ isAdmin, isLoggedIn }: { isAdmin: boolean; isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="md:hidden">
-      <Button variant="ghost" size="sm" onClick={() => setOpen(!open)}>
+      <Button variant="ghost" size="sm" aria-label={open ? "关闭导航" : "打开导航"} aria-expanded={open} onClick={() => setOpen(!open)}>
         {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>
 
       {open && (
-        <div className="absolute top-16 left-0 right-0 bg-background border-b border-border shadow-lg">
+        <div className="absolute top-16 left-0 right-0 bg-background border-b border-border ">
           <div className="px-4 py-3 space-y-2">
             <Link
               href="/search"

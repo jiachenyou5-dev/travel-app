@@ -4,7 +4,7 @@ import { safeAuth } from "@/lib/auth-utils";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Phone, Globe, UtensilsCrossed } from "lucide-react";
+import { MapPin, Clock, Phone, Globe, UtensilsCrossed } from "@/components/ui/clay-icons";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { AmapView } from "@/components/ui/amap-view";
 import { EntityTabsSection } from "@/components/reviews/entity-tabs-section";
@@ -17,8 +17,8 @@ export default async function RestaurantDetailPage({
   const { destinationId, restaurantId } = await params;
 
   const [restaurant, session] = await Promise.all([
-    prisma.restaurant.findUnique({
-      where: { id: restaurantId },
+    prisma.restaurant.findFirst({
+      where: { id: restaurantId, destinationId, destination: { isPublished: true, status: "APPROVED" } },
       include: {
         destination: { select: { id: true, nameZh: true } },
         displayPhotos: { orderBy: { sortOrder: "asc" } },

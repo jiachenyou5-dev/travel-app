@@ -3,38 +3,9 @@
 import { prisma } from "@/lib/prisma";
 import { reviewSchema } from "@/lib/validators";
 import { requireAuth } from "@/lib/auth-utils";
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
-
-function generateFilename(originalName: string): string {
-  const ext = path.extname(originalName).toLowerCase() || ".jpg";
-  return `${crypto.randomUUID()}${ext}`;
-}
-
-async function savePhotos(
-  files: File[],
-  subdir: string
-): Promise<{ url: string; thumbnailUrl: string }[]> {
-  const results: { url: string; thumbnailUrl: string }[] = [];
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", subdir);
-  await mkdir(uploadsDir, { recursive: true });
-
-  for (const file of files) {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) continue;
-    if (file.size > 10 * 1024 * 1024) continue;
-
-    const filename = generateFilename(file.name);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadsDir, filename), buffer);
-
-    const url = `/uploads/${subdir}/${filename}`;
-    results.push({ url, thumbnailUrl: url });
-  }
-  return results;
-}
+import { savePhotos, removeMedia } from "@/lib/media";
 
 export async function createReview(
   entityType: "attraction" | "restaurant" | "accommodation",
@@ -42,6 +13,15 @@ export async function createReview(
   formData: FormData
 ) {
   const user = await requireAuth();
+
+  z.enum(["attraction", "restaurant", "accommodation"]).parse(entityType);
+  z.string().min(1).max(100).parse(entityId);
+  const target = entityType === "attraction"
+    ? await prisma.attraction.findFirst({ where: { id: entityId, isPublished: true, status: "APPROVED", destination: { isPublished: true, status: "APPROVED" } } })
+    : entityType === "restaurant"
+      ? await prisma.restaurant.findFirst({ where: { id: entityId, isPublished: true, status: "APPROVED", destination: { isPublished: true, status: "APPROVED" } } })
+      : await prisma.accommodation.findFirst({ where: { id: entityId, isPublished: true, status: "APPROVED", destination: { isPublished: true, status: "APPROVED" } } });
+  if (!target) throw new Error("内容不存在或尚未发布");
 
   const rawData = {
     rating: Number(formData.get("rating")),
@@ -69,6 +49,7 @@ export async function createReview(
         ? "restaurantId"
         : "accommodationId";
 
+  try {
   await prisma.review.create({
     data: {
       userId: (user as { id: string }).id,
@@ -87,13 +68,17 @@ export async function createReview(
     },
   });
 
-  revalidatePath(`/destinations`);
+  } catch (error) {
+    await removeMedia(uploadedPhotos);
+    throw error;
+  }
+  revalidatePath("/destinations", "layout");
 }
 
 export async function deleteReview(reviewId: string) {
   const user = await requireAuth();
 
-  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, include: { photos: true } });
   if (!review) throw new Error("评论不存在");
 
   const isAdmin = (user as { role?: string }).role === "ADMIN";
@@ -103,5 +88,23 @@ export async function deleteReview(reviewId: string) {
 
   await prisma.review.delete({ where: { id: reviewId } });
 
-  revalidatePath(`/destinations`);
+  await removeMedia(review.photos);
+  revalidatePath("/destinations", "layout");
+}
+
+export async function updateReview(reviewId: string, formData: FormData) {
+  const user = await requireAuth();
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+  if (!review || review.userId !== user.id) throw new Error("无权编辑此评论");
+  const data = reviewSchema.parse({
+    rating: Number(formData.get("rating")),
+    title: formData.get("title") || undefined,
+    content: formData.get("content"),
+    visitDate: formData.get("visitDate") || undefined,
+  });
+  await prisma.review.update({
+    where: { id: reviewId },
+    data: { ...data, title: data.title || null, visitDate: data.visitDate ? new Date(data.visitDate) : null },
+  });
+  revalidatePath("/destinations", "layout");
 }

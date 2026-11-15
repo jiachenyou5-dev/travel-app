@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Star } from "lucide-react";
+import { MessageSquare, Star } from "@/components/ui/clay-icons";
 
 export default async function MyReviewsPage() {
   const sessionUser = await requireAuth();

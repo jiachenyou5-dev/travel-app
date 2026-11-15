@@ -86,3 +86,19 @@ export async function deleteAccommodation(id: string) {
   revalidatePath(`/destinations/${accommodation.destinationId}`);
   revalidatePath("/admin/accommodations");
 }
+
+export async function approveAccommodation(id: string) {
+  await requireAdmin();
+  await prisma.accommodation.update({ where: { id }, data: { status: "APPROVED", isPublished: true, reviewNotes: null } });
+  revalidatePath("/destinations", "layout");
+  revalidatePath("/admin/accommodations", "layout");
+  revalidatePath("/profile/submissions");
+}
+
+export async function rejectAccommodation(id: string, notes: string) {
+  await requireAdmin();
+  if (!notes.trim() || notes.length > 1000) throw new Error("拒绝原因应为 1 至 1000 字");
+  await prisma.accommodation.update({ where: { id }, data: { status: "REJECTED", isPublished: false, reviewNotes: notes.trim() } });
+  revalidatePath("/admin/accommodations", "layout");
+  revalidatePath("/profile/submissions");
+}

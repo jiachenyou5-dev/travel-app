@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { MapPin } from "@/components/ui/clay-icons";
 
 const REGIONS = [
   { value: "", label: "全部地区" },
@@ -27,6 +27,7 @@ export function RegionFilter({ currentRegion = "" }: RegionFilterProps) {
 
   function handleRegionChange(region: string) {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
     if (region) {
       params.set("region", region);
     } else {

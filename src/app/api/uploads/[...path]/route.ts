@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, stat } from "fs/promises";
 import path from "path";
+import { uploadsRoot } from "@/lib/media";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
   ".webp": "image/webp",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
 };
 
 export async function GET(
@@ -24,12 +22,12 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const filePath = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    relativePath
-  );
+  const root = uploadsRoot();
+  const filePath = path.resolve(/* turbopackIgnore: true */ root, relativePath);
+  const contentType = MIME_TYPES[path.extname(filePath).toLowerCase()];
+  if (!filePath.startsWith(root + path.sep) || !contentType) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const fileStat = await stat(filePath);
@@ -38,12 +36,11 @@ export async function GET(
     }
 
     const data = await readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
     return new NextResponse(data, {
       headers: {
         "Content-Type": contentType,
+        "X-Content-Type-Options": "nosniff",
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "Content-Length": String(fileStat.size),
       },

@@ -1,18 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { TravelAdvisorWidget } from "@/components/chat/travel-advisor-widget";
 import { BackToTop } from "@/components/layout/back-to-top";
-import { Fab } from "@/components/layout/fab";
 import "./globals.css";
 
 export const runtime = "nodejs";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const geistSans = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -62,14 +61,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-4 focus:z-[100] focus:rounded-xl focus:bg-primary focus:p-3 focus:text-primary-foreground">跳至主要内容</a>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <Header />
-          <main className="page-enter">{children}</main>
+          <main id="main-content" className="page-enter min-h-[65vh]">{children}</main>
           <Footer />
           <Toaster position="top-center" />
           <TravelAdvisorWidget />
           <BackToTop />
-          <Fab />
         </ThemeProvider>
       </body>
     </html>

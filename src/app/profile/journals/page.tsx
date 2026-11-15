@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { deleteJournal } from "@/app/actions/journals";
-import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen } from "@/components/ui/clay-icons";
 
 export default async function ProfileJournalsPage() {
   const user = await requireAuth();

@@ -9,7 +9,7 @@ import {
   deleteJournalComment,
 } from "@/app/actions/journal-interactions";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "@/components/ui/clay-icons";
 
 interface CommentUser {
   id: string;
